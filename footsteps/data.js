@@ -218,6 +218,26 @@ const LESSONS = [
   },
 
   {
+    year: "2016",
+    title: "What is a word, anyway?",
+    people: "BPE — subword tokenization",
+    body: [
+      { p: "We've said 'word' this whole time. But a machine needs a <em>fixed, finite</em> vocabulary — and language refuses to cooperate. New slang, typos, <code>antidisestablishmentarianism</code>, emoji, source code, Chinese. A list of every possible word is endless; a small list chokes on the first thing it hasn't seen.", lead: true },
+      { desk: "Whole-word vocab → millions of entries and still dies on any unseen word (an <code>UNK</code> token). One-character vocab → tiny, but sequences get punishingly long and each symbol means almost nothing. Neither extreme works." },
+      { p: "The fix: learn the <em>atoms</em> from the data itself. <strong>Byte-Pair Encoding (BPE)</strong> starts from raw characters and repeatedly merges the most frequent adjacent pair into a new token. Common words collapse to a single token; rare words break into a few familiar pieces." },
+      { eq: "low  lower  lowest  newest  widest\nmerge 'e'+'s' → 'es'      (most frequent pair)\nmerge 'es'+'t' → 'est'\nnow: lowest = low+est ,  newest = new+est" },
+      { leap: "The vocabulary is finite (~50–100k tokens) yet <strong>nothing is out-of-vocabulary</strong> — worst case, a weird string falls back to single bytes. Frequent text is cheap (few tokens); rare text degrades gracefully. The model's real unit isn't the word — it's the <strong>token</strong>: often a word, sometimes a subword, sometimes a byte." },
+      { aside: "This is why an LLM can miscount the letters in <code>strawberry</code> or fumble a rhyme — it never sees letters, only these chunks. It's also why API bills are priced 'per token.'" },
+      { legacy: "Everything ahead — embeddings, attention, next-token prediction — runs on these tokens, not words. BPE is the unglamorous first step that makes the pipeline finite and robust. <em>Then</em> each token gets its embedding vector, and the story you've been reading continues." },
+    ],
+    quiz: [
+      { q: "Why not give every whole word its own vocabulary slot?", options: ["Words are too short", "The vocabulary would be effectively infinite and still fail on any unseen word", "It's against the rules", "SVD forbids it"], answer: 1, explain: "Open vocabulary + <code>UNK</code> on anything new. BPE keeps a finite vocab with no true out-of-vocabulary case." },
+      { q: "How does Byte-Pair Encoding build its vocabulary?", options: ["Alphabetically", "By iteratively merging the most frequent adjacent pair, starting from characters/bytes", "By asking human annotators", "Randomly"], answer: 1, explain: "Greedy frequency merges: common chunks become single tokens, rare words split into known pieces." },
+      { q: "A 'token' in a modern LLM is…", options: ["Always exactly one word", "A learned chunk — sometimes a word, sometimes a subword, sometimes a single byte", "Always one letter", "A whole sentence"], answer: 1, explain: "Tokens sit between letters and words. That's why letter-level tasks (counting, rhyming) can trip models up." },
+    ],
+  },
+
+  {
     year: "2018–20",
     title: "Predict the next token. Forever.",
     people: "GPT — the autoregressive idea",
@@ -251,12 +271,21 @@ const LESSONS = [
       { eq: "\"The capital of France is ___\"   → must know geography\n\"2 + 2 = ___\"                    → must do arithmetic\n\"def add(a, b): return ___\"      → must understand code\n\"She felt nervous because ___\"   → must model people" },
       { leap: "To predict the next word <em>well</em>, across the whole internet, the model is <strong>forced</strong> to build a working model of the world — facts, logic, syntax, even psychology. Intelligence isn't programmed in; it's the <em>cheapest way to compress text</em>. Understanding falls out as a side effect of getting really good at autocomplete." },
       { aside: "This is the deepest idea in the course: <strong>compression forces understanding.</strong> You saw the seed in SVD (squeeze the table → discover topics) and word2vec (squeeze prediction → discover analogy). Same principle, the whole way up." },
-      { legacy: "Yet GPT-3, for all its power, still wasn't ChatGPT. Ask it a question and it might just… ask more questions. One final piece turns a raw predictor into an assistant." },
+
+      { h: "But how big, exactly? The Chinchilla correction" },
+      { p: "If scale is the lever, the billion-dollar question is the <em>recipe</em>: given a fixed compute budget, do you build a <em>bigger model</em>, or train a smaller one on <em>more data</em>? <strong>Kaplan et al. (2020)</strong> answered 'mostly bigger model' — and the industry raced to ever-larger parameter counts." },
+      { p: "<strong>Chinchilla (Hoffmann et al., 2022)</strong> showed that was wrong. Done carefully, the optimum wants parameters and training <em>tokens</em> scaled in lock-step:" },
+      { eq: "compute-optimal  ≈  20 training tokens per parameter\nso a 70B model wants ~1.4 trillion tokens —\nnot a bigger model starved of data" },
+      { leap: "Chinchilla (70B params) <strong>beat</strong> Gopher (280B) — four times smaller, trained on far more data. Most giant models had been quietly <em>under-trained</em>: too many parameters, too few tokens. Data isn't an afterthought — it's half the recipe." },
+      { aside: "The twist scientists love: Kaplan and Chinchilla disagreed not over deep theory but mundane bookkeeping — whether to count the embedding parameters, too-short learning-rate warmup on the tiny calibration models. Fix those and Kaplan's curves reproduce Chinchilla's. <em>Careful</em> beat <em>clever</em>." },
+
+      { legacy: "Yet GPT-3, for all its power, still wasn't ChatGPT. Ask it a question and it might just… ask more questions. One more piece turns a raw predictor into an assistant." },
     ],
     quiz: [
       { q: "What was GPT-2→GPT-3's main change?", options: ["A brand-new architecture", "Mostly scale: more parameters, data, compute on the same recipe", "Switching to SVD", "Adding keyword search"], answer: 1, explain: "Same next-token Transformer, dramatically bigger. Scale itself was the lever." },
       { q: "'Emergence' here means…", options: ["The model crashed", "Skills nobody trained for (math, code, reasoning) appeared at scale", "It got slower", "It forgot words"], answer: 1, explain: "Unprogrammed abilities surface past a size threshold — a byproduct of predicting well." },
       { q: "Why does pure next-token prediction yield real knowledge?", options: ["It memorizes every sentence", "Predicting the next word well forces an internal model of facts/logic/the world", "It uses cosine similarity", "Humans label every answer"], answer: 1, explain: "<b>Compression forces understanding</b> — the same theme as SVD and word2vec, scaled to the internet." },
+      { q: "Chinchilla's key finding was…", options: ["Bigger models are always better", "For a fixed compute budget, parameters and training tokens should scale together (~20 tokens/param) — many models were under-trained", "Scaling laws are fake", "Replace the Transformer with SVD"], answer: 1, explain: "A 70B Chinchilla beat a 280B Gopher by training on far more data. Data is half the recipe, not an afterthought." },
     ],
   },
 
@@ -273,12 +302,32 @@ const LESSONS = [
       { h: "You already know what's inside it" },
       { p: "Open up the LLM answering you right now and every part is a chapter you just walked:" },
       { eq: "first layer        →  a token EMBEDDING table      (Bengio '03, word2vec '13)\ncore operation     →  SELF-ATTENTION               (Bahdanau '14, Transformer '17)\ncontext handling   →  words rewrite from neighbors  (the 'bank' problem, BERT '18)\nhow it writes      →  next-token autoregression     (GPT)\nhow it's helpful   →  instruction tuning + RLHF      (ChatGPT '22)" },
-      { legacy: "From Firth's 1957 sentence — <em>'know a word by the company it keeps'</em> — to the assistant in your browser, it's <strong>one</strong> idea, refined for 65 years: meaning lives in context, and if you build a machine to exploit that hard enough, understanding emerges. You've now walked the entire road. 🎉" },
+      { legacy: "From Firth's 1957 sentence to the assistant in your browser, it's <strong>one</strong> idea, refined for decades: meaning lives in context, and if you build a machine to exploit that hard enough, understanding emerges. But the story didn't stop at ChatGPT — the next leap was teaching the model to <em>think</em>. One more chapter." },
     ],
     quiz: [
       { q: "Why isn't a raw pretrained LLM (like GPT-3) already a helpful assistant?", options: ["It's too small", "It only continues text patterns — it doesn't follow instructions or align to what users want", "It can't read", "It uses SVD"], answer: 1, explain: "Pretraining = next-token prediction. Following instructions & being helpful is added afterward." },
       { q: "What does RLHF do?", options: ["Makes the model bigger", "Uses human rankings to train a reward model, then steers the LLM toward preferred answers", "Counts word co-occurrences", "Translates text"], answer: 1, explain: "Reinforcement Learning from Human Feedback — aligns the model with human preferences (helpful/honest/harmless)." },
       { q: "The first layer of a modern LLM is fundamentally…", options: ["An SVD", "A token embedding table — the same idea from Bengio/word2vec", "A keyword index", "A reward model"], answer: 1, explain: "It starts by turning tokens into vectors — the very embeddings this whole course was about. The road is one continuous thread." },
+    ],
+  },
+
+  {
+    year: "2024 → now",
+    title: "Teaching it to think",
+    people: "o1 · DeepSeek-R1 — reasoning & RLVR",
+    body: [
+      { p: "RLHF made models <em>helpful</em>, but hand one a hard math or coding problem and even ChatGPT would blurt out an answer — often wrong. It had no room to <em>work</em>. The next leap: let the model think before it speaks.", lead: true },
+      { desk: "Human feedback teaches style and preference. But for math or code, 'which answer do you <em>like</em> better?' is the wrong question — there's a <strong>right answer</strong>. How do you train on that?" },
+      { p: "<strong>RLVR — reinforcement learning from <em>verifiable</em> rewards.</strong> Drop the human rater. Instead ask: did the math answer match? Did the code pass its tests? That's an objective, un-gameable signal. Let the model generate long attempts, keep the ones that verify, reinforce them." },
+      { p: "Trained this way, models learn to emit a long <strong>chain of thought</strong> — scratch work, dead ends, backtracking — before the final answer. And the more tokens they're given to 'think,' the better they score. A new knob appeared: <strong>test-time compute</strong>, separate from training compute." },
+      { leap: "DeepSeek's <strong>R1-Zero</strong> drove it home: from a base model with <em>no</em> worked examples, pure verifiable-reward RL, it taught <em>itself</em> to reason — rediscovering 'wait, let me check my work' from scratch. Reasoning wasn't programmed in; it emerged because it's the cheapest way to get the answer right." },
+      { aside: "Same tune as the whole course: don't engineer the skill — set up an objective that <strong>forces</strong> it. SVD was forced to find topics; GPT was forced to model the world; RLVR forces the model to reason. Pressure, not instruction." },
+      { legacy: "From Firth's 1957 sentence — <em>'know a word by the company it keeps'</em> — to a machine that teaches itself to reason, it's <strong>one</strong> idea, refined for ~70 years: meaning lives in context, and if you build a machine to exploit that hard enough — then squeeze it with the right pressure — understanding, and now reasoning, emerge. You've walked the entire road. 🎉" },
+    ],
+    quiz: [
+      { q: "How does RLVR differ from RLHF?", options: ["It's just bigger", "The reward is an objective, checkable signal (tests pass, answer matches) instead of human preference", "It uses no compute", "It removes attention"], answer: 1, explain: "Verifiable rewards can't be gamed the way a learned preference model can — ideal for math and code." },
+      { q: "'Test-time compute' means…", options: ["Training for longer", "Letting the model spend more tokens thinking at answer-time improves results", "A faster GPU", "Shrinking the model"], answer: 1, explain: "A new scaling axis: longer chains of thought at inference, separate from how long you trained." },
+      { q: "Why is R1-Zero teaching itself to reason the same theme as the rest of the course?", options: ["It isn't related", "An objective that forces the skill (verifiable reward) makes reasoning emerge — like compression forced understanding", "It memorized the answers", "It uses keyword search"], answer: 1, explain: "Pressure, not instruction. The recurring idea: set up the right objective and the capability falls out." },
     ],
   },
 ];
