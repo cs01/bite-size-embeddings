@@ -12,7 +12,8 @@ No build step, no dependencies — static HTML/CSS/JS.
 | `/` | **Hub** | landing page linking the tracks |
 | `/footsteps/` | **Footsteps** | how we taught machines meaning — Firth → embeddings → self-attention → RLHF. 13 chapters, live widgets, quizzes. Saves progress in `localStorage`. Deep-link a chapter with `#<n>` (e.g. `footsteps/#2`). |
 | `/svd/` | **SVD Explorer** | singular value decomposition built bottom-up: vectors → eigenvectors → geometry → image compression. The math behind Footsteps ch.2 (LSA). |
-| `/transcripts/` | reference | cleaned Stanford CS336 lecture transcripts, used to sanity-check coverage. Not part of the site. |
+| `/lectures/` | **Lecture Atlas** | Stanford CS336 (18 lectures) distilled into searchable cards — concepts, key takeaways, quotes, each linked to the YouTube lecture. Built from `/transcripts/`. |
+| `/transcripts/` | reference | cleaned Stanford CS336 lecture transcripts, used to sanity-check coverage and source the Atlas. Not part of the site. |
 
 The two courses cross-link: Footsteps ch.2 → "go deeper" → SVD Explorer, and SVD Explorer → "back to the story" → Footsteps ch.2.
 

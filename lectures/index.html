@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lecture Atlas — the modern LM stack, mapped</title>
+  <meta name="description" content="The whole modern language-model stack on one page — Stanford CS336's 18 lectures laid out as a lifecycle map of concepts, takeaways, and quotes. Click any node for detail." />
+  <meta name="theme-color" content="#0e1117" />
+  <meta name="author" content="Chad Smith" />
+  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;circle cx='16' cy='16' r='10' fill='%237ee787'/&gt;&lt;/svg&gt;" />
+  <style>
+    :root {
+      --bg: #0e1117; --panel: #161b22; --panel-2: #1c2330; --line: #2b3441;
+      --ink: #e6edf3; --muted: #8b949e; --accent: #7ee787; --accent-2: #6ea8fe;
+      --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    a { color: var(--accent-2); }
+    main { width: 100%; max-width: 1100px; margin: 0 auto; padding: 6vh 24px 100px; }
+    .crumb { font-size: 13px; margin: 0 0 20px; }
+    .crumb a { color: var(--muted); text-decoration: none; }
+    .crumb a:hover { color: var(--accent); }
+    .kicker { font-family: var(--mono); color: var(--accent); letter-spacing: 2px; font-size: 13px; text-transform: uppercase; }
+    h1 { font-size: 33px; line-height: 1.15; margin: 8px 0 10px; }
+    .blurb { color: var(--muted); font-size: 17px; margin: 0 0 8px; max-width: 70ch; }
+    .src { color: var(--muted); font-size: 13.5px; margin: 0 0 26px; max-width: 70ch; }
+
+    .toolbar { position: sticky; top: 0; z-index: 20; background: var(--bg);
+      padding: 12px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 30px; }
+    #q { width: 100%; padding: 12px 14px; font-size: 15px; color: var(--ink); font-family: inherit;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 10px; outline: none; }
+    #q:focus { border-color: var(--accent); }
+    .stats { margin-top: 10px; font-size: 13px; color: var(--muted); font-family: var(--mono); }
+    .stats b { color: var(--ink); font-weight: 600; }
+
+    /* ---- the map: a vertical lifecycle spine of themed stages ---- */
+    .stage { position: relative; display: grid; grid-template-columns: 210px 1fr; gap: 26px;
+      padding: 4px 0 30px 28px; }
+    .stage::before { content: ""; position: absolute; left: 5px; top: 10px; bottom: -4px; width: 2px; background: var(--line); }
+    .stage:last-child::before { bottom: auto; height: 14px; }
+    .stage::after { content: ""; position: absolute; left: 0; top: 8px; width: 12px; height: 12px;
+      border-radius: 50%; background: var(--bg); border: 2px solid var(--c); box-shadow: 0 0 0 4px var(--bg); }
+    .stage-label { position: sticky; top: 92px; align-self: start; }
+    .stage-step { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--c); }
+    .stage-label h2 { margin: 3px 0 6px; font-size: 19px; }
+    .stage-label p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .nodes { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+    .node { text-align: left; cursor: pointer; font: inherit; color: inherit;
+      background: var(--panel); border: 1px solid var(--line); border-top: 2px solid var(--c);
+      border-radius: 10px; padding: 14px 15px; transition: transform .12s, border-color .12s, opacity .15s; }
+    .node:hover { transform: translateY(-3px); border-color: var(--c); }
+    .node .nhead { display: flex; gap: 9px; align-items: baseline; }
+    .node .nnum { font-family: var(--mono); font-size: 12px; color: var(--c); }
+    .node h3 { margin: 0; font-size: 15px; line-height: 1.25; }
+    .node .none { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .node .ntopics { margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
+    .node .tchip { font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+      border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+    .node.dim { opacity: .18; }
+    .node.hit { box-shadow: 0 0 0 1px var(--c) inset; }
+
+    mark { background: rgba(126,231,135,.25); color: var(--ink); border-radius: 3px; padding: 0 1px; }
+
+    /* ---- detail drawer ---- */
+    #scrim { position: fixed; inset: 0; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none;
+      transition: opacity .2s; z-index: 40; }
+    #scrim.open { opacity: 1; pointer-events: auto; }
+    #drawer { position: fixed; top: 0; right: 0; height: 100%; width: 480px; max-width: 92vw;
+      background: var(--panel); border-left: 1px solid var(--line); z-index: 50;
+      transform: translateX(100%); transition: transform .22s ease; overflow-y: auto; padding: 26px 28px 60px; }
+    #drawer.open { transform: translateX(0); }
+    #drawer .dclose { position: absolute; top: 16px; right: 18px; background: none; border: none;
+      color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
+    #drawer .dclose:hover { color: var(--ink); }
+    #drawer .dstep { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; }
+    #drawer h2 { margin: 6px 0 6px; font-size: 22px; }
+    #drawer .done { color: var(--muted); font-size: 14.5px; margin: 0 0 18px; }
+    #drawer .dtopics { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 22px; }
+    #drawer .dtopics span { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+      border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; background: var(--panel-2); }
+    #drawer h4 { font-family: var(--mono); font-size: 11.5px; letter-spacing: 1.5px; text-transform: uppercase;
+      margin: 22px 0 9px; }
+    #drawer ul { margin: 0; padding-left: 18px; }
+    #drawer li { margin: 0 0 9px; font-size: 14px; }
+    #drawer blockquote { margin: 0 0 9px; padding: 7px 0 7px 13px; border-left: 2px solid var(--accent-2);
+      font-style: italic; font-size: 13.5px; opacity: .92; }
+    #drawer .watch { display: inline-flex; gap: 7px; margin-top: 20px; font-size: 13.5px; text-decoration: none; }
+    #drawer .watch:hover { text-decoration: underline; }
+
+    .empty { color: var(--muted); text-align: center; padding: 50px; }
+    footer { color: var(--muted); font-size: 13px; margin-top: 50px; text-align: center; }
+    footer a { color: var(--muted); }
+
+    @media (max-width: 720px) {
+      .stage { grid-template-columns: 1fr; gap: 12px; padding-left: 22px; }
+      .stage-label { position: static; }
+      h1 { font-size: 27px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="crumb"><a href="../">← all courses</a></p>
+    <div class="kicker">reference · the field on one page</div>
+    <h1>Lecture Atlas</h1>
+    <p class="blurb">The whole modern language-model stack, mapped as a lifecycle — from raw data and tokens to a served, aligned model. Every lecture is a node; click one for its concepts, takeaways, and the lines worth remembering.</p>
+    <p class="src">Distilled from <a href="https://www.youtube.com/playlist?list=PLoROMvodv4rMqXOcazWaTUHhq-yembLCV" target="_blank" rel="noopener">Stanford CS336: Language Modeling from Scratch (Spring 2026)</a>. Cards are study notes — watch the lecture for the real thing.</p>
+
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Search the whole map — concepts, takeaways, quotes…  (e.g. flash attention, KV cache, GRPO)" autocomplete="off" />
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <div id="map"></div>
+
+    <footer>Built by Chad Smith · <a href="https://github.com/cs01/bite-size-embeddings">source on GitHub</a></footer>
+  </main>
+
+  <div id="scrim"></div>
+  <aside id="drawer" aria-hidden="true"></aside>
+
+  <script>
+  const LECTURES = [
+    {
+      n: 1, id: "JuoVZkPBiKk", title: "Overview, Tokenization",
+      oneLiner: "Maps the full from-scratch LM pipeline (basics, systems, scaling, data, alignment), then teaches tokenization up to byte-pair encoding.",
+      topics: ["from-scratch philosophy", "efficiency vs. resources", "the bitter lesson", "scaling laws / Chinchilla", "mixture of experts", "GPU systems & kernels", "byte-pair encoding (BPE)", "compression ratio"],
+      takeaways: [
+        "Model accuracy is framed as efficiency times resources, so even small efficiency gains dominate at large scale where a single run can cost hundreds of millions of dollars.",
+        "The bitter lesson is commonly misread: it is not that algorithms don't matter, but that algorithms which scale are the ones that matter (e.g. 44x algorithmic efficiency gains on ImageNet, 2012–2019).",
+        "Scaling laws are not laws of nature; you engineer a scaling recipe (FLOP budget → hyperparameters) with hyperparameter transfer, so predictability matters as much as raw optimality.",
+        "Tokenization improves efficiency by compressing byte streams into fewer tokens, and since attention is quadratic in sequence length, shorter sequences are cheaper.",
+        "BPE is a data-driven heuristic: start from bytes and iteratively merge the most frequent adjacent pair, so common sequences become single tokens and rare ones split — no unknown tokens.",
+        "Character-, byte-, and word-level tokenizers are each suboptimal (rare-token blowup, compression ratio of one, unbounded vocab), motivating BPE as the practical compromise."
+      ],
+      quotes: [
+        "We offer no explanation. We attribute the success of these architectures all else to divine benevolence.",
+        "The right interpretation is that algorithms that scale are what matters.",
+        "Scaling laws are not laws of nature. They don't just happen automatically. You kind of have to will them into existence."
+      ]
+    },
+    {
+      n: 2, id: "kuYAsz7zspQ", title: "PyTorch (einops)",
+      oneLiner: "Resource accounting in deep learning: tensor memory and precision, einops, FLOP counting, and the arithmetic-intensity framework for memory- vs compute-bound ops.",
+      topics: ["floating-point precision (FP32/BF16/FP8)", "mixed precision training", "einops (einsum, reduce, rearrange)", "FLOPs vs FLOP/s and MFU", "arithmetic intensity / roofline", "memory-bound vs compute-bound", "6ND FLOP counting", "optimizer state memory"],
+      takeaways: [
+        "BFloat16 keeps FP32's full dynamic range by shifting bits from mantissa to exponent, trading resolution for stability — the practical sweet spot for stochastic training.",
+        "Einops names tensor dimensions instead of index positions, so batched matmuls and transposes become explicit and self-documenting (einsum sums out unmentioned dims, reduce generalizes sum/mean/max).",
+        "A matmul's forward pass costs ~2·(tokens)·(parameters) FLOPs; the backward pass is exactly twice that (gradients w.r.t. inputs and parameters), giving the canonical 6ND per training step.",
+        "Arithmetic intensity (FLOPs per byte moved) vs the accelerator's intensity (~295 for H100) decides the bottleneck: element-wise ops and matrix-vector products are memory bound; large matmuls are compute bound.",
+        "GELU and ReLU take essentially the same wall-clock time despite GELU's extra arithmetic, because both are memory bound — the extra compute hides behind data movement.",
+        "Optimizer states dominate memory (Adam needs 8 bytes/param for two moments); gradient accumulation and activation checkpointing trade compute for memory to enable larger models."
+      ],
+      quotes: [
+        "The point is not to precisely calculate every single thing, but just get the rough shape of things.",
+        "Once you have einops, then you just think in a different way, and all the transposes and reductions, it becomes more fluid.",
+        "Matrix multiplications are compute bound. Basically everything else is memory bound."
+      ]
+    },
+    {
+      n: 3, id: "lVynu4bo1rY", title: "Architectures",
+      oneLiner: "Survey of modern Transformer design choices, distilling which are now consensus versus freely variable by comparing across recent models.",
+      topics: ["pre-norm vs post-norm", "RMSNorm", "gated linear units (SwiGLU/GeGLU)", "RoPE position embeddings", "depth-to-width aspect ratio", "stability (Z-loss, QK-norm, soft-capping)", "GQA/MQA and KV cache", "sliding window attention"],
+      takeaways: [
+        "Modern models move the norm out of the residual stream (pre-norm) to keep the residual path clean, giving straight-through gradients, fewer spikes, and stable deep training without heavy warm-up.",
+        "RMSNorm replaces LayerNorm and biases are dropped because these low-arithmetic-intensity ops are ~0.17% of FLOPs yet up to 25% of runtime — removing memory-bound work is a free systems win.",
+        "Gated linear units (SwiGLU, GeGLU) consistently beat plain ReLU/GELU on parameter-matched comparisons, hence the ~2/3 dimension correction and near-universal adoption.",
+        "RoPE rotates each 2D coordinate pair by an angle proportional to position, so inner products depend only on relative offset — a true relative position embedding with inner-product structure.",
+        "Many hyperparameters (4x FFN ratio, head-dim × heads = model-dim, ~100 aspect ratio) have wide forgiving basins, so once in range, FLOPs and utilization matter more than fine-tuning them.",
+        "Stability and inference cost now drive architecture: Z-loss/QK-norm/soft-capping tame softmax blow-ups, GQA shrinks the KV cache, and hybrid sliding-window/full attention manages long context."
+      ],
+      quotes: [
+        "I've titled this 'everything you didn't want to know about architectures and hyperparameters' because we all wished we lived in a world where the only thing you had to know was VC dimension.",
+        "It has to learn from data, it has to train efficiently on GPUs, and it has to not blow up. All these requirements end up baked straight into the architecture.",
+        "Every time people encounter stability issues, they say, but what if we just throw a layer norm into attention? Turns out that works too."
+      ]
+    },
+    {
+      n: 4, id: "cKSwj_qZ8Jg", title: "Attention Alternatives",
+      oneLiner: "Two directions for scaling: linear-time attention alternatives for long contexts, and mixture-of-experts layers for parameter-efficient compute.",
+      topics: ["linear attention", "associativity of matmul", "state space models (Mamba 2, Gated DeltaNet)", "hybrid attention", "DeepSeek sparse attention", "mixture of experts", "top-K routing & load balancing", "multi-head latent attention"],
+      takeaways: [
+        "Attention cost is quadratic in sequence length and overtakes the FFN at long contexts, so dropping the softmax lets matmul associativity reorder QKᵀV into Q(KᵀV), trading N² for a small key/value-dim term.",
+        "Linear attention has a duality: a dense parallel matmul for training, or a fixed-state RNN for cheap inference; input-dependent gates (Mamba 2, Gated DeltaNet) preserve this while behaving like modern LSTMs.",
+        "No fully linear model is proven at scale; production systems are hybrids (e.g. 7:1 in MiniMax M1) that keep occasional full softmax layers, and quality degrades as the recurrent ratio rises.",
+        "DeepSeek Sparse Attention keeps attention exact but cheap: a lightweight indexer top-K selects a token subset, then full attention runs only on it — and it can be bolted on during long-context extension.",
+        "MoE replaces the MLP with many experts but activates only K per token, growing parameters without growing FLOPs; learned inner-product top-K routing plus shared + fine-grained experts is the consensus design.",
+        "MoE training is hard because routing is non-differentiable and prone to rich-get-richer expert collapse, tamed by heuristic auxiliary load-balancing losses, router float32/Z-loss, and dropless kernels."
+      ],
+      quotes: [
+        "Sometimes don't get too stuck up on the quadratic versus not. Sometimes the constant factors are really, really important.",
+        "The hard thing about MoEs is that during training you only have one or K experts active, so you don't know what happened with the rest. Despite this, you must somehow learn to route.",
+        "We're not going to solve it with either RL or bandit. We're going to solve it with the power of heuristics and deep learning magic."
+      ]
+    },
+    {
+      n: 5, id: "izZba4UA7iY", title: "GPUs, TPUs",
+      oneLiner: "GPU/TPU hardware and execution models, the memory-vs-compute bottleneck, and the optimization tricks that culminate in flash attention.",
+      topics: ["streaming multiprocessors", "memory hierarchy", "roofline / arithmetic intensity", "SIMT and control divergence", "low precision (FP8/MXFP8/FP4)", "operator fusion", "tiling and wave quantization", "flash attention"],
+      takeaways: [
+        "Clock-speed (Dennard) scaling tapped out in the 2000s, so progress shifted to horizontal parallelism: GPUs trade serial latency for throughput across hundreds of cores grouped into streaming multiprocessors.",
+        "Compute throughput grew far faster than memory bandwidth, so most optimization is about respecting the memory hierarchy — keeping data in fast shared memory/L1 rather than slow HBM.",
+        "Because threads run SIMT (32-thread warps in lockstep), an if-statement runs both branches serially with idle masked threads, so engineers prefer masking over conditionals.",
+        "The roofline model splits performance into a memory-bound diagonal and compute-bound flat region; the goal is to raise operational intensity enough to stay on the saturated flat part.",
+        "Low precision (BF16, FP8 E4M3/E5M2, block-scaled MXFP8/MXFP4) cuts bytes moved and drives FLOP growth, but needs per-op format choices and tricks like storing a matrix and its transpose.",
+        "Flash attention is purely a systems win: tiled matmuls, an online running-max softmax computed tile-by-tile, and backward-pass recomputation to avoid storing the N² activation."
+      ],
+      quotes: [
+        "Instead of making things go faster serially with your clock, you scale horizontally, having more things executing instructions in parallel.",
+        "As soon as you go outside your shared memory, things are slow, so grouping blocks to decrease global memory reads is the name of the game.",
+        "A lot of the story is really just about memory memory memory memory; how do we reduce the amount of memory access we have to do?"
+      ]
+    },
+    {
+      n: 6, id: "xnDHaNUvHBg", title: "Kernels, Triton, XLA",
+      oneLiner: "Hands-on GPU performance: writing Triton kernels, benchmarking and profiling, and the hardware constraints that govern real throughput.",
+      topics: ["GPU memory hierarchy", "thread blocks and warps", "Triton kernels", "warp occupancy and bank conflicts", "memory coalescing", "kernel fusion", "tiling", "benchmarking and profiling"],
+      takeaways: [
+        "Performance is governed by a memory hierarchy where registers/shared memory are fast but small and HBM is large but slow, so kernels load into shared memory once, compute, and write back to minimize HBM traffic.",
+        "The clean threads/blocks/grids model is only enough for correctness; performance depends on 32-thread warps (divergence hurts), occupancy limited by register use, bank conflicts, and coalescing.",
+        "Naive PyTorch launches a kernel per op, each touching HBM, whereas built-in kernels and torch.compile fuse them into one kernel reading/writing HBM once — the source of the speedup.",
+        "Triton writes kernels at the thread-block level in Python-like code (load a block to shared memory, compute, store), avoiding manual thread sync — a hybrid between PyTorch's whole-matrix and CUDA's per-thread views.",
+        "When data doesn't fit a block you iterate over tiles with a per-thread accumulator (row-sum/softmax); matmul applies this via tiling, raising arithmetic intensity to roughly the tile size.",
+        "Always benchmark (warm up, CUDA events, synchronize, average) and profile before optimizing, since the profiler reveals which kernels actually run and whether ops fused."
+      ],
+      quotes: [
+        "Large memory is slow and far, but big. And fast memory like registers and L1 resides on the SM, it's local and fast, but small.",
+        "If you just care about correctness, that's all you need to know. But in practice, the performance is very sensitive to the hardware.",
+        "Whenever things are in shared memory, things look like PyTorch, and I can just say matmul it, and it'll do the thing."
+      ]
+    },
+    {
+      n: 7, id: "SzpOcwdIL0Y", title: "Parallelism (1)",
+      oneLiner: "Multi-GPU training foundations: collective communication primitives, the interconnect hardware that carries them, and data/tensor/pipeline parallelism.",
+      topics: ["collectives (all-reduce, reduce-scatter, all-gather)", "ranks and world size", "NVLink/NVSwitch/InfiniBand", "RDMA and NCCL", "torch.distributed", "data parallelism (DDP)", "tensor parallelism", "pipeline parallelism"],
+      takeaways: [
+        "Multi-GPU training exists for two reasons: a model may not fit in one GPU's HBM, and splitting work trains faster at the cost of communication bandwidth.",
+        "Collectives are 1980s distributed primitives; all-gather, reduce-scatter, and all-reduce dominate, and all-reduce equals a reduce-scatter then all-gather — the hook for ZeRO/FSDP.",
+        "Interconnect speed degrades with scale: NVLink/NVSwitch within a node (~1.8 TB/s), then InfiniBand across nodes, then Ethernet; RDMA lets GPUs read/write each other's memory bypassing the CPU.",
+        "DDP is elegant and model-agnostic: each rank trains its own data shard, then a single all-reduce of param.grad after backward makes all ranks share identical gradients and parameters.",
+        "Tensor parallelism splits each layer so every rank computes partial activations that must be all-gathered each forward layer and reduce-scattered on backward — communication-heavy, best within an NVLink node.",
+        "Pipeline parallelism gives each rank a contiguous block of layers, passing activations point-to-point; it tolerates slow links but creates bubbles that micro-batching and overlap reduce."
+      ],
+      quotes: [
+        "It's very easy to use a ton of GPUs, but it's hard to use them effectively.",
+        "All means do it for all the ranks, and gather is what you're doing to all the ranks.",
+        "This is the only difference between standard training and DDP. It's actually pretty nice and elegant. We synchronize the gradients across all the workers."
+      ]
+    },
+    {
+      n: 8, id: "6-cXp-aOmdg", title: "Parallelism (2)",
+      oneLiner: "Algorithms and hardware trade-offs for parallelizing training across GPUs, nodes, and data centers, building up to combined 4D parallelism.",
+      topics: ["data parallelism (ZeRO/FSDP)", "optimizer/gradient/parameter sharding", "pipeline parallelism", "tensor parallelism", "expert parallelism (MoE)", "activation memory & sequence parallelism", "interconnect topology", "4D parallelism"],
+      takeaways: [
+        "Optimizer state, not parameters, dominates memory under Adam; ZeRO stages 1–2 shard it (and gradients) for free since reduce-scatter + all-gather costs the same as the all-reduce data parallel already pays.",
+        "ZeRO-3 / FSDP also shards parameters, gathering them per layer on demand; the extra all-gather is made nearly free by overlapping communication with computation.",
+        "Data parallelism consumes the batch-size budget, bounded by the critical batch size, forcing model-parallel methods once you run out of batch to spend.",
+        "Pipeline parallelism communicates only small activations point-to-point so it suits slow inter-node links, but suffers bubbles that shrink with more micro-batches; zero-bubble scheduling defers weight-gradient work to fill gaps.",
+        "Tensor and expert parallelism are communication-hungry all-to-all primitives best kept within a fast node (~8 GPUs); for MoE, expert parallel beats tensor parallel by keeping matmuls large.",
+        "Activations often dwarf parameter memory at scale; the practical lower bound 34·S·B·H/T comes from combining tensor, sequence parallel, and activation recomputation."
+      ],
+      quotes: [
+        "The new unit of compute is not the GPU, it's the entire data center.",
+        "Until your model fits into memory, you cut up your model by whatever means necessary, and once it fits, you just data parallel the rest of the way.",
+        "Parallelization code looks reasonable and people can understand it — until you implement pipeline parallel."
+      ]
+    },
+    {
+      n: 9, id: "Q15rhEWZPQ4", title: "Scaling Laws (1)",
+      oneLiner: "Scaling laws as a predictive engineering paradigm that extrapolates small-scale behavior to large runs, covering data, architecture, and compute-optimal scaling.",
+      topics: ["power-law scaling", "data scaling laws", "compute-optimal training", "Chinchilla vs Kaplan", "critical batch size", "isoFLOPs method", "learning-rate / muP scaling", "MoE scaling"],
+      takeaways: [
+        "Scaling laws are curve-fitting rules where loss decays polynomially in compute, data, or parameters, appearing as straight lines on log-log plots far from the irreducible-error asymptote.",
+        "Interventions like data mixture, optimizer, or ensembling usually shift only the intercept, not the slope, so the best choice at small scale often stays best at large scale.",
+        "The critical batch size marks the crossover from the noise-limited regime (perfect returns to bigger batches) to the bias-limited regime, and it grows as a power law as target loss falls.",
+        "Kaplan and Chinchilla disagreed (big undertrained models vs ~20 tokens/parameter) due to subtle choices: excluding embedding parameters, suboptimal LR warmup, and fixed oversized batches.",
+        "Compute-optimal ratios like Chinchilla's 20:1 are often abandoned in production because serving cost dominates, so labs deliberately overtrain smaller, cheaper-to-serve models.",
+        "Upstream perplexity scales cleanly, but transfer to downstream benchmark accuracy is unreliable, so establish scaling laws on low-variance perplexity then link to transfer separately."
+      ],
+      quotes: [
+        "Scaling laws are these simple predictive rules of how to go from small-scale model behavior and try to extrapolate them up to large-scale behavior.",
+        "Very often your slopes don't change. Often the interventions you do just change the intercept of the scaling laws.",
+        "Scaling laws are kind of lower bounds in some sense. If I continue this recipe and scale it up, then this is what I will get."
+      ]
+    },
+    {
+      n: 10, id: "EfM546A79aM", title: "Inference",
+      oneLiner: "Why running a trained transformer to generate tokens is memory-bound and auto-regressive, and the architectural and systems techniques that make it faster.",
+      topics: ["KV cache", "arithmetic intensity", "throughput vs latency", "grouped / multi-latent attention", "quantization", "speculative decoding", "continuous batching", "paged attention"],
+      takeaways: [
+        "Inference is a repeated, growing cost (OpenAI is estimated at ~8.6T tokens/day) and, unlike training, cannot parallelize over the sequence because tokens are generated one at a time.",
+        "Generation is fundamentally memory-bound: MLPs reach decent intensity with large batches, but attention can't because each sequence has its own KV cache, so bigger batches don't help attention's intensity (~1).",
+        "There is an inherent latency-vs-throughput trade-off in batch size: larger batches amortize parameter loading for throughput but grow the KV cache, worsening latency and eventually exhausting memory.",
+        "Most speedups share one principle — shrink the KV cache without hurting accuracy: grouped-query attention, DeepSeek's multi-latent attention, cross-layer attention, and sliding-window/local attention.",
+        "Quantization, pruning, and distillation reduce precision or parameter count as systems-level optimizations, always checked against accuracy on calibration evals since they're lossy.",
+        "Speculative decoding is a lossless speedup: a cheap draft model proposes tokens the expensive target verifies in parallel via rejection sampling; Orca (continuous batching) and vLLM (paged attention) handle live workloads."
+      ],
+      quotes: [
+        "Training is a one-time cost. Once you're done, that's it. But inference is a repeated cost — you incur it every single day.",
+        "Whenever you hear people say inference is memory bound, you know why.",
+        "Checking is faster than generation. If I give you a sequence, it's fast to tell me how good it is, much faster than generating one at a time."
+      ]
+    },
+    {
+      n: 11, id: "vTfEyOyzV9E", title: "Scaling Laws (2)",
+      oneLiner: "How practitioners actually scale up: open-source recipes and the two strategies for scale-sensitive hyperparameters — scaling-law fitting (DeepSeek) and reparameterization (μP), plus optimizers like Muon.",
+      topics: ["μP (maximal update parameterization)", "warm-up stable decay (WSD)", "critical/optimal batch size scaling", "learning rate scaling laws", "Chinchilla replication / isoflops", "MoE sparsity scaling", "Muon optimizer", "hyperparameter drift"],
+      takeaways: [
+        "Two competing strategies for scale-sensitive hyperparameters: stabilize them so the optimum stays fixed across scale (μP), or directly fit a scaling law that predicts how LR and batch size change (DeepSeek, Qwen).",
+        "Warm-up stable decay replaces cosine with a constant-LR plateau then a rapid ~10–20% decay, so you can rewind to the last stable checkpoint and re-decay instead of restarting — making data sweeps far cheaper.",
+        "Optimal batch size depends mainly on total data D (~√D), while optimal LR rises with data but falls with model size, so under Chinchilla coupling LR decreases and batch size increases with compute.",
+        "Muon orthogonalizes the momentum update via Newton-Schulz (matmul-only, sets singular values to one), giving big small-scale gains that shrink with scale, yet Kimi K2 was trained entirely with it.",
+        "μP derives per-layer init and per-parameter LR scalings from two invariants (activations O(1) at init, change O(1) per step = feature learning), keeping the optimal LR fixed as width grows.",
+        "Scaling is more art than science: trends across many orders of magnitude can suddenly blow up, μP breaks under learned RMSNorm gains or Lion or large decoupled weight decay, and the Chinchilla-ratio axis is a neglected confounder."
+      ],
+      quotes: [
+        "You either attempt to stabilize them, or you attempt to just scaling-law fit them, and then go with the scaling law.",
+        "It's really hard to know whether something works at scale. Thus far, small-scale experiments and transferring them up has been the way we do science.",
+        "A big part of scaling laws is still vibes. Do I really believe the StepFun survey's setting is similar enough to mine that they'll transfer? We can't possibly know."
+      ]
+    },
+    {
+      n: 12, id: "JpAxdTWQJxM", title: "Evaluation",
+      oneLiner: "How LMs are evaluated, from perplexity and exam benchmarks to chat, agentic, reasoning, and safety evals — plus the validity pitfalls that undermine them all.",
+      topics: ["perplexity / log-loss", "exam benchmarks (MMLU, GPQA, HLE)", "chat evals & Elo (Chatbot Arena)", "LLM-as-a-judge", "agentic benchmarks (SWE-bench)", "pure reasoning (ARC-AGI)", "safety & jailbreaking", "contamination & ecological validity"],
+      takeaways: [
+        "Evaluation turns an abstract construct ('good at reasoning') into a concrete metric, and because evals set the north stars developers chase, they implicitly shape what AI becomes.",
+        "Perplexity is the natural distribution-level metric and varies smoothly with scale (ideal for scaling laws), but penalizes every token equally and requires trusting that the model's probabilities sum to one.",
+        "Exam benchmarks keep getting saturated and rebuilt harder (MMLU → GPQA → Humanity's Last Exam), but fail on ecological validity since real users ask open-ended questions, not multiple choice.",
+        "Open-ended chat is judged via pairwise human preference with Elo (Chatbot Arena) or LLM-as-a-judge, both of which conflate style with correctness and favor longer, sycophantic responses.",
+        "Agentic evaluation measures what models do, not just what they say, so the scaffold (planning, sub-agent delegation, memory, context engineering) is part of what's being scored.",
+        "All benchmarks face contamination and validity threats; defenses include contamination detection, fresh post-cutoff evals, private datasets, and always auditing actual model outputs."
+      ],
+      quotes: [
+        "Evaluation sets north stars, and model developers — open, closed, everyone — look at evaluation as a measure of progress.",
+        "By pushing down on perplexity, we'll eventually reach AGI is the argument.",
+        "When we talk about evaluating agents, it's evaluating both the language model and the agent scaffold."
+      ]
+    },
+    {
+      n: 13, id: "-qm0ln33G24", title: "Data (Sources, Datasets)",
+      oneLiner: "Where pre-training data comes from, the legal and technical constraints on getting it, and how major datasets filter raw web crawls into usable corpora.",
+      topics: ["pre/mid/post-training data", "web crawling & Common Crawl", "robots.txt and terms of service", "copyright & fair use", "rule-based vs model-based filtering", "deduplication & language ID", "high-quality sources", "synthetic data"],
+      takeaways: [
+        "Data is the least-disclosed and arguably most important differentiator between models, kept secret for competitive advantage and to limit copyright liability.",
+        "You can't truly train on 'the whole internet': dynamic apps, auth walls, robots.txt, bot-detection, terms of service, and copyright shrink the crawlable web, and restrictions rose sharply since mid-2023.",
+        "Almost everything online is copyrighted by default, so legal training needs a license or a fair-use appeal, which courts weigh via purpose, nature, amount used, and market effect.",
+        "Recent rulings suggest training itself can be transformative fair use, but pirating books to get the data is separately illegal — costing Anthropic a $1.5B settlement (~$3,000/book).",
+        "The core recipe is consistent: take a massive raw crawl (up to ~240T tokens) and aggressively filter via rules or trained classifiers, deduplicate, and language-filter down to a few trillion high-quality tokens.",
+        "Filtering evolved from Reddit-karma links (GPT-2) and Wikipedia-likeness classifiers (CCNet) to heuristic rules (C4) and model-based classifiers (DCLM) and synthetic rephrasing (Nemotron); Common Pile shows permissive-only is viable."
+      ],
+      quotes: [
+        "Language models are trained on the entire internet. This doesn't quite type check, because for that to be true it would have to be an RL agent that goes on the internet.",
+        "You can't pirate and then buy it and say, actually, never mind what I just did first.",
+        "Data processing is right now, at least, a lot just based on vibes. You define this classifier, you define this rule, you set some threshold."
+      ]
+    },
+    {
+      n: 14, id: "5sxHosTLPF8", title: "Data (Pipeline)",
+      oneLiner: "The pre-training data pipeline — HTML/PDF extraction, model-based filtering, hashing-based dedup, and data mixing — plus synthetic data for post-training.",
+      topics: ["HTML/PDF text extraction", "model-based quality filtering", "fastText classifiers", "MinHash + LSH dedup", "Jaccard similarity", "data mixing", "regression-based mixture optimization", "synthetic post-training data"],
+      takeaways: [
+        "Converting raw HTML/PDF to text is a lossy, mostly rule-based step chosen for speed; PDFs are rare but high-value and often need expensive OCR/VLM processing and recrawling.",
+        "Filtering follows one schema — use a small high-quality target set to train a fast classifier (typically fastText) that scores raw documents — essential because most teams can't afford low-quality tokens.",
+        "There's no universal optimal threshold: training longer tolerates lower-quality data, while shorter runs benefit more from high quality, so the right filter depends on token budget.",
+        "Deduplication must run in linear time at web scale, so near-duplicate detection uses MinHash (collision probability = Jaccard similarity) with LSH banding to sharpen matching into a phase transition.",
+        "Data mixing must account for source size, not just quality — naively upweighting a small high-quality source forces many epochs and overfitting — so use capped epoching (UniMax) or downsampling.",
+        "Regression-based mixing trains a swarm of small proxy models on varied mixtures, fits mixture-weights → loss, and optimizes it, but risks overfitting evals and assumes small-to-large transfer."
+      ],
+      quotes: [
+        "Generally if you bother to make a PDF, that means you probably have something interesting to say, as opposed to a web page.",
+        "Technically if you have infinite compute you don't need to filter and can train on everything, but realistically everyone has to filter.",
+        "You can't just naively look at the datasets, define a distribution, and sample, because you're missing how many data points are there."
+      ]
+    },
+    {
+      n: 15, id: "2oH6PWPrYFo", title: "Mid/Post-Training",
+      oneLiner: "Turning a strong base model into a useful instruction-following chatbot through supervised fine-tuning and RLHF, with emphasis on the messy realities of data.",
+      topics: ["supervised fine-tuning (SFT)", "RLHF", "instruction following", "synthetic/model-based annotation", "mid-training data mixing", "DPO", "PPO / policy gradients", "reward over-optimization"],
+      takeaways: [
+        "Post-training extracts behaviors already latent in pre-training, so with a strong base model SFT needs surprisingly little data (even ~500 examples can sharply reduce unsafe responses) — quality over quantity.",
+        "SFT data evolved from repurposed NLP benchmarks (FLAN) to distilled chat traces (Alpaca), human crowdsourcing (Open Assistant), and now agentic/tool-use formats — chattier, expert-written, higher quality.",
+        "Training a model to emit facts it doesn't actually know (especially with cues like 'Reference:') teaches it to hallucinate — a key motivation for RL, which is policy-dependent and can teach calibration.",
+        "Instruction tuning is increasingly folded into the decay/'mid-training' phase using high-quality and chat data, blurring base vs post-trained; mid-training is short enough to run many cheap data-mix ablations.",
+        "RLHF reframes the problem from fitting a distribution to maximizing a reward, needed because what humans say they prefer differs from what they generate, and because verification is often easier than generation.",
+        "DPO replaces PPO's reward model and on-policy sampling with a simple positive/negative gradient from a closed-form tilted-reference solution; it matches PPO for most non-frontier use."
+      ],
+      quotes: [
+        "If we ignore pre-training and just try to post-train our way to victory, we will get none of the things we want, absolutely none of it.",
+        "You might not want to train on the highest-quality data if the model doesn't already know it; tail knowledge can sometimes be actively harmful in that it induces hallucinations.",
+        "Take a gradient step in the right direction and a negative gradient step from the bad stuff — works reasonably well as long as you set the step sizes right."
+      ]
+    },
+    {
+      n: 16, id: "dIFAi87Ws4E", title: "Post-Training — RLVR",
+      oneLiner: "Reinforcement learning from verifiable rewards for training reasoning models, focusing on GRPO and how DeepSeek R1, Kimi K1.5, and Qwen 3 apply it.",
+      topics: ["RLVR", "GRPO", "PPO", "policy gradients", "outcome vs process supervision", "reward hacking", "long chain-of-thought", "RL infrastructure"],
+      takeaways: [
+        "PPO is powerful but notoriously finicky for language models because it needs a separate value network and has dozens of sensitive implementation details, motivating simpler alternatives.",
+        "GRPO replaces PPO's value function by computing each rollout's advantage as a z-score (reward minus group mean over std) across samples from the same prompt, making it easy to implement.",
+        "GRPO's length normalization and std division deviate from a first-principles policy gradient, causing wrong answers to grow unboundedly long and over-weighting too-easy or too-hard problems.",
+        "DeepSeek R1 showed a base model plus GRPO with simple outcome accuracy and format rewards can nearly match OpenAI o1 — and that process reward models and tree search were not necessary.",
+        "Curriculum and difficulty filtering matter since problems too hard give no reward signal; teams filter to medium difficulty and drop problems the model already masters.",
+        "RLVR is only as robust as its reward, so reward hacking (agents reading git history for fixes, non-robust verifiers like the Lean compiler) is a recurring danger as compute scales."
+      ],
+      quotes: [
+        "If you see a blog post titled 'the 37 implementation details of PPO', you know this is an algorithm very sensitive to your implementation decisions.",
+        "RLVR is only as robust as your reward, and your rewards can sometimes be not very robust at all.",
+        "It's really all about the reward for RL; RLHF and RLVR are very similar problems — the difference is we want more unhackable rewards."
+      ]
+    },
+    {
+      n: 17, id: "26FtD08ZpOU", title: "Alignment, Multimodality",
+      oneLiner: "Extending transformers beyond text to images and other modalities, from CLIP/SigLIP encoders through LLaVA and Qwen-VL to the fully-tokenized Chameleon approach.",
+      topics: ["CLIP contrastive pretraining", "SigLIP sigmoid loss", "Vision Transformer (ViT)", "vision-language models (LLaVA, Qwen-VL)", "projector/adapter alignment", "dynamic resolution & AnyRes", "multimodal RoPE", "VQ-VAE discrete tokens (Chameleon)"],
+      takeaways: [
+        "Everything fed to a transformer must become a token representing a semantic unit, so non-text modalities need an encoder turning pixels into tokens the way BPE tokenizes text.",
+        "CLIP learns image-text alignment by contrastively maximizing the dot product of matched pairs against mismatches, enabling zero-shot ImageNet classification that beats a supervised ResNet despite noisy web data.",
+        "SigLIP replaces CLIP's batch-wide softmax with an independent sigmoid per pair, decoupling the loss from batch size and making training cheaper and parallelizable.",
+        "VLMs like LLaVA and Qwen-VL stitch a frozen vision encoder to an LLM through a trained projector, training in stages that first align the projector then fine-tune the language model.",
+        "High resolution and video require dynamic/adaptive tokenization (AnyRes tiling, 2×2 patch merging, 3D RoPE over height/width/time) and careful weighting so token-heavy video doesn't overwhelm text.",
+        "Chameleon's fully-discrete approach (VQ-VAE tokens in one shared vocabulary) enables image generation but suffers instability and information loss, leaving continuous encoders plus diffusion as the practical frontier."
+      ],
+      quotes: [
+        "The reality is that transformers work really well, and despite the best efforts of people to try other things, those are still at scale the best thing we have.",
+        "We're in some sense converting these images into textual tokens, so I can leverage the pre-trained language model.",
+        "Just calling things discrete tokens isn't hiding the fact that there's an image living there."
+      ]
+    },
+    {
+      n: 18, id: "9EEm4iMAF5s", title: "Guest Lecture — Dan Fu",
+      oneLiner: "LLM inference at scale — prefill/decode, KV caching, scheduling — plus two research directions (mega kernels and looped/recurrent PARSE models) that fall out of understanding the stack.",
+      topics: ["LLM inference serving", "prefill vs decode disaggregation", "KV cache & prefix sharing", "continuous batching", "mega kernels (ThunderKittens)", "tensor/expert parallelism", "looped/recurrent transformers (PARSE)", "scaling laws for recurrence"],
+      takeaways: [
+        "Inference splits into a compute-bound prefill (many tokens in, one out, like training without backward) and a memory-bandwidth-bound decode (one token at a time needing a full model load), so production runs them on separate hardware.",
+        "KV caches with prefix sharing avoid recomputing activations across turns and users, and as caches overflow they cascade to DRAM, SSD, and disk — an eviction/prefetch problem nearly identical to 1970s–80s OS paging.",
+        "Mega kernels fuse an entire layer into one GPU kernel, treating the GPU as a distributed system to overlap dependent work and eliminate launch/teardown gaps, reaching ~72% of memory-bandwidth speed-of-light on an H100.",
+        "Looped/recurrent transformers (PARSE) reuse parameter blocks to trade FLOPs for quality without growing parameters, but naive training blows up; modeling the inter-block residual as a state-space system with spectral radius < 1 stabilizes it.",
+        "Iso-parameter scaling laws show that when you fix model size and add data, you should also increase recurrences — suggesting today's zero-recurrence, data-heavy models leave quality on the table.",
+        "Real production inference exposes rare bugs (NaN logits causing repeats, mishandled tool calls causing doom loops, an off-by-one kernel error producing spurious Chinese characters) that only surface at trillion-token-per-day scale."
+      ],
+      quotes: [
+        "You can think of inference as the engine that turns electricity into intelligence.",
+        "If you understand the inference engines and the GPU kernels that underlie the core technology, you can enable full-stack innovation in machine learning algorithms.",
+        "The trade-offs are people's blood, sweat, and tears — mega kernels turn out to be very labor intensive to write."
+      ]
+    }
+  ];
+
+  // Lifecycle stages: theme grouping that turns the syllabus into a map of the field.
+  const STAGES = [
+    { key: "data",   c: "#7ee787", label: "Data & Tokens",          blurb: "What goes in — sourcing, filtering, and turning bytes into tokens.", ns: [13, 14, 1] },
+    { key: "arch",   c: "#6ea8fe", label: "Architecture",            blurb: "The model itself — the Transformer and its alternatives.",          ns: [3, 4] },
+    { key: "hw",     c: "#f0883e", label: "Hardware & Kernels",      blurb: "The metal — GPUs, the memory wall, and writing fast kernels.",      ns: [2, 5, 6] },
+    { key: "dist",   c: "#b692ff", label: "Distributed Training",    blurb: "Scaling out across GPUs, nodes, and whole data centers.",          ns: [7, 8] },
+    { key: "scale",  c: "#f778ba", label: "Scaling Laws",            blurb: "Predicting returns — extrapolating small runs to large ones.",     ns: [9, 11] },
+    { key: "eval",   c: "#e3b341", label: "Evaluation",              blurb: "Measuring it — and why every benchmark is partly a lie.",          ns: [12] },
+    { key: "post",   c: "#56d4dd", label: "Post-Training & Alignment", blurb: "Making it useful — SFT, RLHF, RLVR, and multimodality.",         ns: [15, 16, 17] },
+    { key: "serve",  c: "#ff7b72", label: "Inference & Serving",     blurb: "Shipping it — the repeated cost of generating every token.",       ns: [10, 18] }
+  ];
+
+  const byN = Object.fromEntries(LECTURES.map(l => [l.n, l]));
+  const map = document.getElementById("map");
+  const q = document.getElementById("q");
+  const stats = document.getElementById("stats");
+  const scrim = document.getElementById("scrim");
+  const drawer = document.getElementById("drawer");
+
+  const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const conceptCount = new Set(LECTURES.flatMap(l => l.topics.map(t => t.toLowerCase()))).size;
+
+  function buildMap() {
+    map.innerHTML = STAGES.map((s, i) => `
+      <section class="stage" style="--c:${s.c}">
+        <div class="stage-label">
+          <div class="stage-step">STAGE ${String(i + 1).padStart(2, "0")}</div>
+          <h2>${s.label}</h2>
+          <p>${s.blurb}</p>
+        </div>
+        <div class="nodes">
+          ${s.ns.map(n => {
+            const l = byN[n];
+            const chips = l.topics.slice(0, 3).map(t => `<span class="tchip">${esc(t)}</span>`).join("");
+            const more = l.topics.length > 3 ? `<span class="tchip">+${l.topics.length - 3}</span>` : "";
+            return `<button class="node" data-n="${n}">
+              <div class="nhead"><span class="nnum">${String(n).padStart(2, "0")}</span><h3>${esc(l.title)}</h3></div>
+              <p class="none">${esc(l.oneLiner)}</p>
+              <div class="ntopics">${chips}${more}</div>
+            </button>`;
+          }).join("")}
+        </div>
+      </section>`).join("");
+    map.querySelectorAll(".node").forEach(b => b.addEventListener("click", () => openDrawer(+b.dataset.n)));
+  }
+
+  function applySearch() {
+    const terms = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    LECTURES.forEach(l => {
+      const hay = (l.title + " " + l.oneLiner + " " + l.topics.join(" ") + " " +
+        l.takeaways.join(" ") + " " + l.quotes.join(" ")).toLowerCase();
+      const hit = !terms.length || terms.every(t => hay.includes(t));
+      if (hit) shown++;
+      const node = map.querySelector(`.node[data-n="${l.n}"]`);
+      node.classList.toggle("dim", terms.length > 0 && !hit);
+      node.classList.toggle("hit", terms.length > 0 && hit);
+    });
+    map.querySelectorAll(".stage").forEach(st => {
+      const any = [...st.querySelectorAll(".node")].some(n => !n.classList.contains("dim"));
+      st.style.display = any ? "" : "none";
+    });
+    stats.innerHTML = terms.length
+      ? `<b>${shown}</b> of ${LECTURES.length} lectures match`
+      : `<b>${LECTURES.length}</b> lectures · <b>${STAGES.length}</b> stages · <b>${conceptCount}</b> distinct concepts`;
+  }
+
+  function openDrawer(n) {
+    const l = byN[n];
+    const st = STAGES.find(s => s.ns.includes(n));
+    drawer.style.setProperty("--c", st.c);
+    drawer.innerHTML = `
+      <button class="dclose" aria-label="Close">×</button>
+      <div class="dstep" style="color:${st.c}">${String(n).padStart(2, "0")} · ${esc(st.label.toUpperCase())}</div>
+      <h2>${esc(l.title)}</h2>
+      <p class="done">${esc(l.oneLiner)}</p>
+      <div class="dtopics">${l.topics.map(t => `<span>${esc(t)}</span>`).join("")}</div>
+      <h4 style="color:${st.c}">Key takeaways</h4>
+      <ul>${l.takeaways.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+      <h4 style="color:${st.c}">In their words</h4>
+      ${l.quotes.map(qq => `<blockquote>${esc(qq)}</blockquote>`).join("")}
+      <a class="watch" href="https://www.youtube.com/watch?v=${l.id}" target="_blank" rel="noopener">▶ Watch lecture ${String(n).padStart(2, "0")} on YouTube</a>`;
+    drawer.querySelector(".dclose").addEventListener("click", closeDrawer);
+    drawer.classList.add("open"); scrim.classList.add("open");
+    drawer.setAttribute("aria-hidden", "false");
+    drawer.scrollTop = 0;
+  }
+  function closeDrawer() {
+    drawer.classList.remove("open"); scrim.classList.remove("open");
+    drawer.setAttribute("aria-hidden", "true");
+  }
+
+  scrim.addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+  q.addEventListener("input", applySearch);
+
+  buildMap();
+  applySearch();
+  </script>
+</body>
+</html>
