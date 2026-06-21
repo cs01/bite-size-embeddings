@@ -3,7 +3,17 @@
 
 const KEY = "footsteps.progress.v1";
 let state = load();
-let current = state.last || 0;
+// A `#<n>` hash (1-based lesson number) deep-links a specific chapter and wins
+// over saved progress, so shared / cross-site links (e.g. from svd-explorer)
+// land on the right lesson.
+function lessonFromHash() {
+  const n = parseInt((location.hash || "").replace(/^#/, ""), 10);
+  return Number.isFinite(n) ? n - 1 : NaN;
+}
+let current = (() => {
+  const h = lessonFromHash();
+  return h >= 0 ? h : (state.last || 0);
+})();
 
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY)) || { done: {}, last: 0 }; }
@@ -38,6 +48,9 @@ function renderQuiz(quiz, li) {
 }
 
 function render() {
+  current = Math.max(0, Math.min(current, LESSONS.length - 1));
+  // keep URL shareable/deep-linkable without spamming history
+  if (history.replaceState) history.replaceState(null, "", `#${current + 1}`);
   const l = LESSONS[current];
   const el = document.getElementById("lesson");
   el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade");

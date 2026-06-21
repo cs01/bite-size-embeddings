@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Footsteps — How We Taught Machines Meaning</title>
+  <meta name="description" content="An interactive walk through the ideas that taught machines meaning — from Firth's 1957 'company it keeps' to embeddings, self-attention, and RLHF. Click through the timeline, play with the widgets, quiz yourself." />
+  <meta name="theme-color" content="#0e1117" />
+  <meta name="author" content="Chad Smith" />
+  <link rel="canonical" href="https://cs01.github.io/bite-size-embeddings/footsteps/" />
+
+  <!-- Open Graph / social share -->
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Footsteps — How We Taught Machines Meaning" />
+  <meta property="og:description" content="An interactive walk from Firth's 1957 'company it keeps' to embeddings, self-attention, and RLHF. Timeline, live widgets, quizzes." />
+  <meta property="og:url" content="https://cs01.github.io/bite-size-embeddings/footsteps/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Footsteps — How We Taught Machines Meaning" />
+  <meta name="twitter:description" content="An interactive walk from Firth's 1957 'company it keeps' to embeddings, self-attention, and RLHF." />
+
+  <!-- self-contained favicon: blue dot, matches the timeline -->
+  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;circle cx='16' cy='16' r='10' fill='%236ea8fe'/&gt;&lt;/svg&gt;" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="rail">
+      <div class="rail-head">
+        <a class="hublink" href="../">← all courses</a>
+        <h1>Footsteps</h1>
+        <p class="sub">how we taught machines meaning</p>
+        <div id="overall-progress"><div id="overall-bar"></div></div>
+        <span id="overall-label"></span>
+      </div>
+      <nav id="timeline"></nav>
+    </aside>
+    <main id="stage">
+      <article id="lesson"></article>
+      <footer id="nav">
+        <button id="prev">← previous</button>
+        <span id="crumb"></span>
+        <button id="next">next →</button>
+      </footer>
+    </main>
+  </div>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
