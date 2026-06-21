@@ -125,6 +125,7 @@ strong { color: #f0f4f9; font-weight: 600; }
 .widget input[type=range] { vertical-align: middle; }
 .readout { font-family: var(--mono); font-size: 15px; margin-top: 10px; }
 .readout b { color: var(--accent); }
+.opt.mask.on { border-color: var(--accent); background: rgba(110,168,254,.14); color: var(--ink); }
 
 /* ---- nav footer ---- */
 #nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 8vw; border-top: 1px solid var(--line); background: var(--panel); }
