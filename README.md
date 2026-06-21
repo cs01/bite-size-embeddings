@@ -1,30 +1,37 @@
-# Footsteps — How We Taught Machines Meaning
+# Interactive courses — how machines learned to understand
 
-An interactive walk through the ideas that taught machines meaning — from
-Firth's 1957 *"you shall know a word by the company it keeps"* to embeddings,
-self-attention, and RLHF. One continuous thread, 13 chapters, refined for 65 years.
+Short, hands-on, play-as-you-read courses on the ideas behind modern AI.
+No build step, no dependencies — static HTML/CSS/JS.
 
 **▶ Live: https://cs01.github.io/bite-size-embeddings/**
 
-Click through the timeline, play with the live widgets (cosine similarity,
-self-attention weights, autoregressive generation), and quiz yourself as you go.
-Progress is saved locally in your browser.
+## Tracks
+
+| path | course | what it is |
+|------|--------|-----------|
+| `/` | **Hub** | landing page linking the tracks |
+| `/footsteps/` | **Footsteps** | how we taught machines meaning — Firth → embeddings → self-attention → RLHF. 13 chapters, live widgets, quizzes. Saves progress in `localStorage`. Deep-link a chapter with `#<n>` (e.g. `footsteps/#2`). |
+| `/svd/` | **SVD Explorer** | singular value decomposition built bottom-up: vectors → eigenvectors → geometry → image compression. The math behind Footsteps ch.2 (LSA). |
+| `/lectures/` | **Lecture Atlas** | Stanford CS336 (18 lectures) distilled into searchable cards — concepts, key takeaways, quotes, each linked to the YouTube lecture. Built from `/transcripts/`. |
+| `/transcripts/` | reference | cleaned Stanford CS336 lecture transcripts, used to sanity-check coverage and source the Atlas. Not part of the site. |
+
+The two courses cross-link: Footsteps ch.2 → "go deeper" → SVD Explorer, and SVD Explorer → "back to the story" → Footsteps ch.2.
 
 ## Run locally
-
-No build step, no dependencies. Open `index.html`, or serve the folder:
 
 ```sh
 python3 -m http.server   # then open http://localhost:8000
 ```
 
-## Files
+## Footsteps internals
 
-| file         | what it is                                        |
-|--------------|---------------------------------------------------|
-| `index.html` | shell + script tags                               |
-| `styles.css` | all styling (dark theme, responsive)              |
-| `data.js`    | the curriculum — `LESSONS[]` (chapters + quizzes) |
-| `app.js`     | rendering, navigation, quiz scoring, widgets      |
+| file | role |
+|------|------|
+| `footsteps/index.html` | shell + script tags |
+| `footsteps/styles.css` | styling (dark theme, responsive) |
+| `footsteps/data.js` | the curriculum — `LESSONS[]` (chapters + quizzes) |
+| `footsteps/app.js` | rendering, navigation, quiz scoring, widgets, hash deep-linking |
 
-Add or edit a chapter by appending to `LESSONS` in `data.js` — no other changes needed.
+Add or edit a chapter by appending to `LESSONS` in `footsteps/data.js` — no other changes needed.
+
+`svd/index.html` is a single self-contained file (inline CSS + JS, canvas widgets).

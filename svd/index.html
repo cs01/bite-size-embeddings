@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SVD Explorer — Learn Singular Value Decomposition</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --u: #f778ba; --v: #56d364; --sigma: #e3b341;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--fg); line-height: 1.6; }
+  header { padding: 30px 24px; text-align: center; border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #161b22, #0d1117); }
+  header h1 { margin: 0 0 8px; font-size: 28px; }
+  header p { margin: 0; color: var(--muted); }
+  /* ---- two-pane: left rail + scrolling stage ---- */
+  #app { display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
+  #rail { background: var(--panel); border-right: 1px solid var(--border); overflow-y: auto; padding: 22px 16px; }
+  .rail-head h1 { margin: 0; font-size: 22px; }
+  .rail-head .sub { margin: 4px 0 14px; color: var(--muted); font-size: 13px; }
+  .xlink { display: block; color: var(--muted); font-size: 12px; text-decoration: none; }
+  .xlink:hover { color: var(--accent); }
+  .xback { margin: 0 0 14px; padding: 8px 10px; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; line-height: 1.4; }
+  .xback b { color: var(--accent); }
+  #stage { overflow-y: auto; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 24px 72px; }
+  /* ---- vertical timeline nav ---- */
+  #timeline { position: relative; margin-top: 8px; }
+  #timeline::before { content: ""; position: absolute; left: 14px; top: 12px; bottom: 12px; width: 2px; background: var(--border); }
+  .tab { position: relative; display: block; width: 100%; text-align: left; font: inherit;
+    padding: 8px 8px 8px 38px; margin: 0 0 2px; background: none; border: none;
+    color: var(--muted); border-radius: 8px; cursor: pointer; transition: background .15s; }
+  .tab:hover { background: var(--bg); }
+  .tab.active { background: var(--bg); }
+  .tl-dot { position: absolute; left: 8px; top: 11px; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--border); transition: .15s; }
+  .tab:hover .tl-dot { border-color: var(--accent); }
+  .tab.active .tl-dot { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 3px #58a6ff33; }
+  .tl-kick { display: block; font-family: ui-monospace, monospace; font-size: 11px; color: var(--accent); letter-spacing: .3px; }
+  .tl-title { display: block; font-size: 14px; color: var(--fg); }
+  .tab.active .tl-title { font-weight: 600; }
+  @media (max-width: 760px) {
+    html, body { height: auto; }
+    #app { display: block; height: auto; }
+    #rail { border-right: none; border-bottom: 1px solid var(--border); }
+    #timeline { max-height: 42vh; overflow-y: auto; }
+    #stage { overflow-y: visible; }
+    .wrap { padding: 20px 16px 48px; }
+  }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade .25s; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .card { background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .card h2 { margin-top: 0; font-size: 20px; }
+  .card h3 { font-size: 16px; color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+  canvas { background: #0a0e14; border-radius: 8px; display: block; width: 100%; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .matrix-input { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 200px; }
+  .matrix-input input { width: 100%; padding: 8px; background: var(--bg); border: 1px solid var(--border);
+    color: var(--fg); border-radius: 6px; text-align: center; font-family: monospace; font-size: 16px; }
+  .eq { font-family: "Cambria Math", Georgia, serif; font-size: 18px; text-align: center;
+    background: var(--bg); padding: 14px; border-radius: 8px; margin: 14px 0; overflow-x: auto; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+  .val { color: var(--sigma); font-weight: 600; }
+  .uc { color: var(--u); } .vc { color: var(--v); } .sc { color: var(--sigma); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; margin-top: 8px; }
+  .legend span::before { content: "■ "; }
+  .note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 12px; }
+  button.act { padding: 8px 14px; background: var(--accent); color: var(--bg); border: none;
+    border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; margin: 4px 4px 0 0; }
+  button.ghost { background: var(--panel); color: var(--fg); border: 1px solid var(--border); }
+  table.mat { border-collapse: collapse; margin: 8px auto; font-family: monospace; }
+  table.mat td { padding: 4px 10px; text-align: right; }
+  .stat { font-size: 14px; } .stat b { color: var(--sigma); }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-top: 10px; }
+  .bar { background: var(--sigma); border-radius: 4px 4px 0 0; min-width: 24px; position: relative; transition: opacity .2s; }
+  .bar.off { opacity: 0.2; }
+  .bar span { position: absolute; top: -18px; left: 0; right: 0; text-align: center; font-size: 11px; color: var(--muted); }
+  .cap { text-align: center; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .caption { background: var(--bg); border-radius: 8px; padding: 12px 14px; font-size: 14px; min-height: 48px; margin-top: 10px; border-left: 3px solid var(--accent); }
+  .lock { color: var(--v); font-weight: 700; }
+  .ex { background: #08160f; border: 1px solid #1d4d33; border-radius: 8px; padding: 14px 16px;
+    font-family: ui-monospace, monospace; font-size: 13px; margin: 14px 0; line-height: 1.7; }
+  .ex .h { color: var(--v); font-weight: 700; display: block; margin-bottom: 8px; font-family: system-ui; font-size: 14px; }
+  .ex b { color: var(--sigma); }
+  /* bracketed matrix / column-vector */
+  .mtx { display: inline-grid; gap: 2px 12px; padding: 3px 10px; margin: 4px 6px;
+    vertical-align: middle; text-align: right; position: relative; font-family: ui-monospace, monospace; }
+  .mtx::before, .mtx::after { content: ''; position: absolute; top: 1px; bottom: 1px; width: 7px; border: 2px solid var(--muted); }
+  .mtx::before { left: 0; border-right: none; }
+  .mtx::after { right: 0; border-left: none; }
+  .mtx .hot { background: #1f6feb55; border-radius: 3px; transition: background .2s; }
+  /* glossary */
+  dl.gl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; }
+  dl.gl dt { font-weight: 700; color: var(--fg); }
+  dl.gl dd { margin: 0; color: var(--muted); font-size: 14px; }
+  @media (max-width: 600px) { dl.gl { grid-template-columns: 1fr; gap: 2px 0; } dl.gl dd { margin-bottom: 8px; } }
+  /* animated multiply */
+  .mulwrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center;
+    background: var(--bg); border-radius: 8px; padding: 18px; font-family: ui-monospace, monospace; font-size: 18px; }
+  .mulop { color: var(--muted); font-size: 22px; }
+  .activemat { outline: 2px solid var(--fg); border-radius: 8px; padding: 4px; background: #ffffff10; }
+  /* search palette */
+  .searchbtn { margin-top: 14px; padding: 7px 14px; background: var(--panel); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .searchbtn:hover { color: var(--fg); border-color: var(--accent); }
+  .searchbtn kbd { background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; font-family: inherit; margin-left: 6px; }
+  #search-modal { position: fixed; inset: 0; background: #000a; display: none;
+    align-items: flex-start; justify-content: center; z-index: 50; padding-top: 12vh; }
+  #search-modal.open { display: flex; }
+  .search-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    width: min(560px, 92vw); overflow: hidden; box-shadow: 0 20px 60px #000c; }
+  .search-box input { width: 100%; padding: 16px; background: var(--bg); border: none;
+    border-bottom: 1px solid var(--border); color: var(--fg); font-size: 16px; outline: none; }
+  .search-results { max-height: 52vh; overflow-y: auto; }
+  .sr { padding: 11px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .sr:hover, .sr.sel { background: #1f6feb22; }
+  .sr b { color: var(--accent); }
+  .sr small { color: var(--muted); display: block; font-size: 12px; margin-top: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sr-empty { padding: 18px; color: var(--muted); }
+  @keyframes flashbg { 0%,100% { background: transparent; } 25% { background: #58a6ff44; } }
+  dl.gl dt.flash, dl.gl dd.flash { animation: flashbg 1.4s ease; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="rail">
+    <div class="rail-head">
+      <a class="xlink" href="../">← all courses</a>
+      <h1>SVD Explorer</h1>
+      <p class="sub">vectors → eigenvectors → SVD, built bottom-up</p>
+      <a class="xlink xback" href="../footsteps/#2">↩ back to the story — this is the math behind <b>Footsteps</b> ch.2 (LSA)</a>
+      <button class="searchbtn" id="search-open">🔍 Search the glossary <kbd>⌘K</kbd></button>
+    </div>
+    <nav id="timeline">
+      <button class="tab active" data-tab="why"><span class="tl-dot"></span><span class="tl-kick">why it's worth it</span><span class="tl-title">The payoff</span></button>
+      <button class="tab" data-tab="vec"><span class="tl-dot"></span><span class="tl-kick">the building blocks</span><span class="tl-title">Vectors &amp; matrices</span></button>
+      <button class="tab" data-tab="eig"><span class="tl-dot"></span><span class="tl-kick">directions that survive</span><span class="tl-title">Eigenvectors</span></button>
+      <button class="tab" data-tab="idea"><span class="tl-dot"></span><span class="tl-kick">rotate · stretch · rotate</span><span class="tl-title">The SVD idea</span></button>
+      <button class="tab" data-tab="geo"><span class="tl-dot"></span><span class="tl-kick">circle → ellipse</span><span class="tl-title">SVD geometry</span></button>
+      <button class="tab" data-tab="rank"><span class="tl-dot"></span><span class="tl-kick">what to keep, what to toss</span><span class="tl-title">Rank &amp; energy</span></button>
+      <button class="tab" data-tab="img"><span class="tl-dot"></span><span class="tl-kick">the payoff, for real</span><span class="tl-title">Image compression</span></button>
+      <button class="tab" data-tab="gloss"><span class="tl-dot"></span><span class="tl-kick">every term, plain words</span><span class="tl-title">Glossary</span></button>
+    </nav>
+  </aside>
+  <main id="stage">
+  <div class="wrap">
+
+  <!-- ===== 0 · WHY ===== -->
+  <div class="panel active" id="why">
+    <div class="card">
+      <h2>The problem: a movie recommendation system</h2>
+      <p>You're building the engine behind "movies you'll love" — a <b>recommendation system</b>. Millions of people, thousands of movies, one giant table of <b>ratings</b> — except <b>almost every cell is blank</b> (nobody watches everything). It all reduces to one task: <b>rating prediction</b> — guess the blanks. Predict how Dana would rate a film she's never seen, then recommend the ones she'd score highest.</p>
+      <p>Sounds hopeless — too many blanks, too much noise. But real taste isn't random: it runs along a <b>few hidden patterns</b> (action-lover? hopeless romantic? both?). Find those patterns and every person + movie collapses to a handful of numbers — and the blanks fill themselves in.</p>
+      <p><b>SVD is the machine that finds those patterns.</b> Below is a tiny 6-person, 5-movie version so you can watch the whole pipeline work — data → patterns → predictions → recommendation.</p>
+    </div>
+    <div class="card">
+      <h2>The data: who rated what</h2>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+        <div>
+          <div class="cap">ratings table (brighter gold = higher rating)</div>
+          <canvas id="why-data" width="250" height="300"></canvas>
+        </div>
+        <div style="flex:1;min-width:240px">
+          <p class="mono" id="why-labels" style="font-size:12px"></p>
+          <p class="note">Eyeball it: top 3 people love the action movies, bottom 3 love the romance movies. There's a <b>structure</b> hiding in here. SVD finds it without being told.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>SVD ranks the patterns by strength (σ)</h2>
+      <p>Run SVD on the table. The singular values come out like this — two big, the rest tiny:</p>
+      <div class="bars" id="why-bars"></div>
+      <p style="margin-top:14px">Two tall bars = <b>two real patterns</b> carry almost all the information. The short ones are just noise — barely any height at all.</p>
+      <h3 style="margin-top:18px">So what IS a "pattern"?</h3>
+      <p>A pattern is one <b>taste axis</b> — a single left-to-right line. SVD drops <b>both</b> every movie <i>and</i> every person onto that <b>one</b> line. The strongest informative one here is <b>romance ↔ action</b>, found with zero labels. Here's where each lands:</p>
+      <div class="cap" style="text-align:center;margin-bottom:4px">one shared axis — ◆ movies above the line, ● people below · <span class="sc">gold = action end</span>, <span style="color:#58a6ff">blue = romance end</span></div>
+      <canvas id="why-axis" width="800" height="220" style="height:auto;aspect-ratio:800/220"></canvas>
+      <p style="margin-top:8px">The whole point in one picture: <b>action movies and action fans pile on the same side</b> (right); romance movies and romance fans share the other (left). That lining-up <b>is</b> the pattern — and it's why your spot predicts your taste: you'll like the movies sitting near you. (Pattern 1, the strongest of all, is just "how much you rate things overall" — less interesting, so we show pattern 2.)</p>
+      <div class="ex">
+        <span class="h">How you actually USE it</span>
+        Every person and every movie is now just <b>2 numbers</b> — their scores on pattern 1 &amp; 2.<br>
+        predicted rating(person, movie) = <b>combine those 2 numbers</b>.<br>
+        → score a movie someone <b>hasn't seen</b> → that's a <b>recommendation engine</b>.<br>
+        → the sign of the score sorts people into camps and movies into genres, automatically.
+      </div>
+      <h3 style="margin-top:18px;color:var(--v)">Proof: rebuild from only k patterns</h3>
+      <p>Keep the top k patterns, drop the rest, rebuild the whole table. At k=2 it snaps right back:</p>
+      <label>keep top <b id="why-k-label" class="val">2</b> patterns</label>
+      <input id="why-k" type="range" min="1" max="5" value="2">
+      <div style="display:flex;gap:16px;align-items:flex-end;margin-top:8px;flex-wrap:wrap">
+        <div><div class="cap">rebuilt (k patterns)</div><canvas id="why-recon" width="150" height="180"></canvas></div>
+        <div><div class="cap">original</div><canvas id="why-orig" width="150" height="180"></canvas></div>
+        <div class="stat" style="padding-bottom:60px">match: <b id="why-energy">—</b></div>
+      </div>
+      <p class="note" style="margin-top:14px"><b>That's the entire point.</b> 30 numbers → 2 patterns, almost no loss.</p>
+    </div>
+
+    <div class="card">
+      <h2>🎬 The payoff: fill the blanks → recommend</h2>
+      <p>Back to the goal. Each person is now just 2 numbers (their pattern scores); each movie too. Multiply them → a predicted rating for <b>every</b> pair, including films they never watched. Pick a person and see what SVD recommends:</p>
+      <select id="rec-user" style="padding:8px;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:6px;font-size:14px"></select>
+      <div id="rec-bars" style="margin-top:14px"></div>
+      <div class="ex"><span class="h">SVD's recommendation</span><div id="rec-out"></div></div>
+      <p class="note">Real systems run this on millions × millions with &gt;99% of cells blank; a few hundred patterns fill them all. That's the core of Netflix, Spotify, Amazon. The next tabs show <i>how</i> SVD finds the patterns that make it work.</p>
+    </div>
+
+    <div class="card">
+      <h2>📍 The same recommendation, as a picture</h2>
+      <p>Those "2 numbers" are <b>coordinates</b>. Drop every person <i>and</i> every movie as a point on one map — same space, same axes. Now a predicted rating has a shape: it's <b>how far a movie reaches along your arrow</b>. The movie reaching furthest your way is the pick; movies pointing the opposite way are the ones you'd hate.</p>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+        <div style="max-width:460px;flex:1;min-width:280px">
+          <canvas id="rec-geo" width="440" height="360" style="height:auto;aspect-ratio:11/9"></canvas>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:13px;display:flex;gap:16px;margin-bottom:4px"><span class="vc">● people</span><span class="sc">◆ movies</span></div>
+          <div class="caption" id="rec-geo-cap" style="margin-top:6px"></div>
+          <p class="note" style="margin-top:12px">Pick a different person above and watch the arrow swing. <b>Close together = similar taste.</b> The giants use this exact map — just millions of points and a few hundred axes instead of 2.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 1 · VECTORS ===== -->
+  <div class="panel" id="vec">
+    <div class="card">
+      <h2>Where this shows up</h2>
+      <p>Two everyday things, one piece of math. A <b>vector</b> is just a short list of numbers describing something real — a movie scored <span class="mono">(action, romance)</span>, a screen pixel at <span class="mono">(x, y)</span>, a person's <span class="mono">(height, weight)</span>. A <b>matrix</b> is a rule that transforms them — literally what happens when you <b>rotate, scale, or skew an image</b> in Photoshop: every pixel coordinate gets multiplied by a 2×2 matrix. Nail "matrix × vector" here and the rest of the app is downhill.</p>
+    </div>
+    <div class="card">
+      <h2>Start here: a matrix is a machine that moves vectors</h2>
+      <p>Everything in this app builds on one idea. A vector is an arrow. A matrix <b>A</b> takes an <b>input</b> arrow <b>x</b> and hands back an <b>output</b> arrow <b>A·x</b> — usually pointing somewhere else, usually a different length. That input→output move is the one thing SVD is about.</p>
+      <div class="ex">
+        <span class="h">Dead-simple example</span>
+        A = <span class="mtx" style="grid-template-columns:repeat(2,1.4em)"><span><b>2</b></span><span>0</span><span>0</span><span><b>3</b></span></span> (double x, triple y),
+        &nbsp; x = <span class="mtx" style="grid-template-columns:1.4em"><span>1</span><span>1</span></span><br>
+        A·x = <span class="mtx" style="grid-template-columns:auto"><span>2·1 + 0·1</span><span>0·1 + 3·1</span></span> = <span class="mtx" style="grid-template-columns:1.4em"><span><b>2</b></span><span><b>3</b></span></span><br>
+        → the arrow got wider and taller. That's it.
+      </div>
+      <p>Each output number = one <b>row of A</b> "dotted" with x (multiply matching entries, add). Drag the arrow below and watch it happen.</p>
+    </div>
+    <div class="card">
+      <h2>Play: drag x, watch A·x</h2>
+      <p>Here A = [ 2 1 ; 1 2 ]. Drag the <b class="vc">green</b> arrow. The <b class="uc">orange</b> arrow is A·x. Press play to see each output coordinate get built from a row.</p>
+      <div class="grid2">
+        <div><canvas id="mv-canvas" width="400" height="400"></canvas>
+          <p class="cap">green = x (drag me) · orange = A·x</p></div>
+        <div>
+          <div id="mv-readout" class="mono"></div>
+          <button class="act" id="mv-play">▶ animate the two dot products</button>
+          <p class="note" style="margin-top:14px">That's the only operation in this whole subject. Eigenvectors and SVD are just questions <i>about</i> this motion.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>▶ The multiplication itself, highlighted</h2>
+      <p>Forget arrows for a second — here's the raw arithmetic of <span class="mono">A·x = b</span>, with the exact cells lighting up as each number is used. This is all "matrix times vector" ever means.</p>
+      <div class="mulwrap" id="mul-stage"></div>
+      <div class="caption" id="mul-expr" style="text-align:center">Press play to walk through it.</div>
+      <button class="act" id="mul-play">▶ step through it</button>
+    </div>
+  </div>
+
+  <!-- ===== 2 · EIGENVECTORS ===== -->
+  <div class="panel" id="eig">
+    <div class="card">
+      <h2>Where this shows up: Google's PageRank</h2>
+      <p>Google's original algorithm ranked the <b>entire web</b> by finding one special vector. Start with any guess of page importance, repeatedly apply "who links to whom," and it settles onto a single stable vector that stops changing — <b>that's an eigenvector</b> of the web's link matrix, and it became the search ranking. The same idea ranks sports teams, models populations, and finds a bridge's natural vibration modes. The thread running through all of them: a direction a transformation leaves pointing the same way.</p>
+    </div>
+    <div class="card">
+      <h2>Eigenvectors: the directions A doesn't rotate</h2>
+      <p>From Tab 1: A usually <b>rotates AND resizes</b> an arrow — it swings it to a new angle and changes its length. But a few special directions get <b>only resized — A keeps them on the same line</b> (it may stretch, shrink, or flip them 180°, but never swings them off their line). Those are <b class="vc">eigenvectors</b>. The resize factor is the <b class="sc">eigenvalue λ</b>.</p>
+      <div class="eq">A v = λ v &nbsp;&nbsp;<span style="color:var(--muted);font-size:14px">("A on v just scales v — same line, no rotation")</span></div>
+      <div class="ex">
+        <span class="h">Dead-simple example</span>
+        A = <span class="mtx" style="grid-template-columns:repeat(2,1.4em)"><span>2</span><span>0</span><span>0</span><span>3</span></span><br>
+        v = (1, 0):  A·v = (2, 0) = <b>2</b>·(1,0)   ✓ same line! eigenvector, λ=<b>2</b><br>
+        v = (0, 1):  A·v = (0, 3) = <b>3</b>·(0,1)   ✓ same line! eigenvector, λ=<b>3</b><br>
+        v = (1, 1):  A·v = (2, 3)  ✗ NOT a multiple of (1,1) → not an eigenvector
+      </div>
+    </div>
+    <div class="card">
+      <h2>Play: hunt for them by dragging</h2>
+      <p>Drag the <b class="vc">green</b> arrow v in a circle. <b class="uc">Orange</b> is A·v. Most directions: they disagree. Line them up on the <b>same line</b> → eigenvector found, it <span class="lock">locks &amp; glows</span>.</p>
+      <div class="grid2">
+        <div><canvas id="eig-canvas" width="400" height="400"></canvas>
+          <p class="cap">green = v (drag me) · orange = A·v</p></div>
+        <div>
+          <div id="eig-readout" class="mono"></div>
+          <button class="act" id="eig-snap">▶ snap to nearest eigenvector</button>
+          <div style="margin-top:10px">
+            <button class="act ghost" data-epreset="2,0,0,3">diagonal (2,3)</button>
+            <button class="act ghost" data-epreset="2,1,1,2">symmetric</button>
+            <button class="act ghost" data-epreset="0,-1,1,0">rotation (none!)</button>
+          </div>
+          <p class="note" style="margin-top:14px">Try <b>rotation</b>: A·v always turns 90°, so it's <b>never</b> parallel to v → <b>no real eigenvectors</b>. Some matrices just don't have them. That gap is exactly why SVD exists.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 3 · THE SVD IDEA ===== -->
+  <div class="panel" id="idea">
+    <div class="card">
+      <h2>You already saw what SVD does</h2>
+      <p>On Tab 0, SVD pulled <b>2 taste patterns</b> out of a messy ratings table and rebuilt it almost perfectly. <span class="mono">A = UΣVᵀ</span> is just the general recipe behind that — it runs on <b>any</b> matrix and hands you its patterns, ranked strongest-first. This tab unpacks what the three letters actually are.</p>
+    </div>
+    <div class="card">
+      <h2>The one equation</h2>
+      <div class="eq">A = U Σ V<sup>T</sup></div>
+      <p>Eigenvectors were fragile — not every matrix has them. SVD is the bulletproof version that works on <b>any</b> matrix (even non-square). Every matrix turns an <b>input</b> vector into an <b>output</b> vector, and SVD says that trip is always the same three moves:</p>
+      <ul>
+        <li><b class="vc">V<sup>T</sup></b> — a <b>rotation</b> of the input (pick the right axes to look along).</li>
+        <li><b class="sc">Σ</b> — a pure <b>stretch</b>. Diagonal, ≥ 0. The <i>singular values</i> σ₁ ≥ σ₂ ≥ … say how much each axis scales.</li>
+        <li><b class="uc">U</b> — a <b>rotation</b> of the output (where the stretched axes land).</li>
+      </ul>
+      <p class="note">Every input→output map = <b>rotate the input → stretch → rotate into the output</b>. SVD finds those axes. See it move in Tab 4.</p>
+      <div class="ex" style="background:#1a1206;border-color:#5c4410">
+        <span class="h" style="color:var(--sigma)">⚠ Don't mix up two different "inputs"</span>
+        Easy trap: thinking you feed a <b>vector</b> into SVD. You don't.<br><br>
+        • The <b class="uc">matrix A</b> is the thing that eats a vector → spits out a vector (lengths differ if A isn't square).<br>
+        • <b class="sc">SVD</b> eats the <b>whole matrix A</b> → spits out the three pieces <b class="uc">U</b>, <b class="sc">Σ</b>, <b class="vc">Vᵀ</b>. No vector goes in.<br>
+        • The "fewer numbers" payoff (Tab 0, Tab 6) is a <b>third</b> thing — keep only the top patterns and re-describe each row with a handful of scores. That's a choice you make <i>after</i> SVD, not SVD itself.
+      </div>
+    </div>
+    <div class="card">
+      <h2>Simplest possible SVD</h2>
+      <p>First, the star of the show: <b class="sc">σ ("sigma") is a singular value = a stretch factor along one axis.</b> Read it like a dial: <b class="sc">σ &gt; 1</b> stretches that direction, <b class="sc">σ = 1</b> leaves it unchanged, <b class="sc">σ &lt; 1</b> shrinks it, <b class="sc">σ = 0</b> flattens it to nothing. The matrix <b class="sc">Σ</b> is just those dials on its diagonal. That's all Σ ever is.</p>
+      <div class="ex">
+        <span class="h">A diagonal matrix is already done</span>
+        A = <span class="mtx" style="grid-template-columns:repeat(2,1.4em)"><span>3</span><span>0</span><span>0</span><span>2</span></span>
+        → U = I, &nbsp;Σ = <span class="mtx" style="grid-template-columns:repeat(2,1.4em)"><span>3</span><span>0</span><span>0</span><span>2</span></span>, &nbsp;Vᵀ = I<br>
+        → singular values are just <b>3</b> and <b>2</b>. No rotation needed.<br><br>
+        <span class="h">A pure rotation has all σ = 1</span>
+        A = <span class="mtx" style="grid-template-columns:repeat(2,2em)"><span>0</span><span>-1</span><span>1</span><span>0</span></span> (turn 90°)<br>
+        → σ₁ = σ₂ = <b>1</b>. It rotates but never stretches, so nothing shrinks.
+      </div>
+      <p>The interesting matrices are in between — they rotate <i>and</i> stretch by different amounts. SVD untangles the two.</p>
+    </div>
+    <div class="card">
+      <h2>How SVD always works — even when eigenvectors don't exist</h2>
+      <p>Tab 2 showed the catch: <b>some matrices have no eigenvectors at all</b> (the pure rotation had none). So we can't always lean on them directly.</p>
+      <p>SVD's trick: don't study A by itself — pair it with its <b>mirror image</b> first. That paired-up matrix is <b>always</b> well-behaved: it always has a full set of clean, perpendicular directions, no matter how nasty A is.</p>
+      <p>SVD borrows those directions and calls them <b class="vc">V</b> (the input axes) and <b class="uc">U</b> (the output axes), and reads the stretch amounts <b class="sc">σ</b> off the same step. You never do this by hand — the solver does it for you.</p>
+      <p class="note"><b>The one takeaway:</b> SVD always exists, because it stands on a fixed-up matrix that simply can't misbehave.</p>
+      <details>
+        <summary>the exact statement (only if you want it)</summary>
+        <p class="mono" style="margin-top:8px"><span class="vc">V</span> = eigenvectors of AᵀA &nbsp;·&nbsp; <span class="uc">U</span> = eigenvectors of AAᵀ &nbsp;·&nbsp; <span class="sc">σ</span> = √(those eigenvalues).<br>("AᵀA" is the mirror-image pairing; it's symmetric, which is what guarantees clean perpendicular eigenvectors.)</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ===== 4 · GEOMETRY ===== -->
+  <div class="panel" id="geo">
+    <div class="card">
+      <h2>Why SVD works: the ellipse fingerprint</h2>
+      <p>Here's the picture under everything. Take the unit circle — every input direction of length 1. <b>Any</b> matrix maps that circle to an <b>ellipse</b>, and the ellipse is the matrix's fingerprint: its <b>longest axis is the strongest pattern</b> (the biggest σ, pointing in its direction), the next axis is the next pattern. "Find the patterns" from Tab 0 is literally "find the axes of this ellipse." Drag the matrix below and watch the fingerprint change.</p>
+    </div>
+    <div class="card">
+      <h2>Watch a matrix bend space</h2>
+      <p>Edit 2×2 matrix <b>A</b>. Left is the <b>input</b>: the unit circle + grid. Right is the <b>output</b>: where A sends every input direction — always an <b>ellipse</b>. The colored arrows are its axes (the legend names them).</p>
+      <div class="grid2">
+        <div>
+          <h3>Matrix A</h3>
+          <div class="matrix-input">
+            <input id="a00" value="2" type="number" step="0.1">
+            <input id="a01" value="1" type="number" step="0.1">
+            <input id="a10" value="0" type="number" step="0.1">
+            <input id="a11" value="1.5" type="number" step="0.1">
+          </div>
+          <div style="margin-top:12px">
+            <button class="act" data-preset="2,1,0,1.5">reset</button>
+            <button class="act ghost" data-preset="1,0,0,1">identity</button>
+            <button class="act ghost" data-preset="0,-1,1,0">rotate</button>
+            <button class="act ghost" data-preset="2,0,0,0.5">stretch</button>
+            <button class="act ghost" data-preset="1,1,1,1">singular</button>
+          </div>
+          <div class="legend"><span class="vc">V (input axes)</span><span class="uc">Uσ (output axes)</span></div>
+        </div>
+        <div><h3>Decomposition</h3><div id="geo-readout" class="mono"></div></div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div><div class="cap">input space</div><canvas id="geo-in" width="400" height="400"></canvas></div>
+        <div><div class="cap">output space (A·x)</div><canvas id="geo-out" width="400" height="400"></canvas></div>
+      </div>
+      <p class="note" style="margin-top:14px">Try <b>singular</b>: σ₂ → 0, circle collapses to a line (rank 1). Try <b>rotate</b>: σ₁=σ₂=1, circle stays a circle.</p>
+    </div>
+    <div class="card">
+      <h2>▶ Watch A = U Σ Vᵀ happen, step by step</h2>
+      <p>Same A as above. Dots colored by starting angle so you can <b>see</b> rotations. Play: <b class="vc">rotate by Vᵀ</b> → <b class="sc">stretch by Σ</b> → <b class="uc">rotate by U</b> → lands on A·x. The <b>dashed outline</b> is the real <span class="mono">A·(circle)</span> — the dots land exactly on it at step 3, proving the 3 steps = A.</p>
+      <div class="grid2">
+        <div><canvas id="anim-canvas" width="440" height="400"></canvas></div>
+        <div>
+          <div class="caption" id="anim-cap">Press play.</div>
+          <button class="act" id="anim-play">▶ play</button>
+          <button class="act ghost" id="anim-reset">↺ reset</button>
+          <label style="margin-top:14px">scrub manually</label>
+          <input id="anim-scrub" type="range" min="0" max="300" value="0">
+          <p class="note" style="margin-top:10px">The decoder ring for the notation: <b>U</b> &amp; <b>V</b> only rotate (never resize), <b>Σ</b> is the only stretch. Three letters, three moves.</p>
+        </div>
+      </div>
+      <div class="cap" style="margin-top:14px">the matrix being applied lights up as the animation runs:</div>
+      <div id="anim-math" class="mulwrap" style="font-size:13px;gap:10px"></div>
+    </div>
+  </div>
+
+  <!-- ===== 5 · RANK ===== -->
+  <div class="panel" id="rank">
+    <div class="card">
+      <h2>First — what "rank" and "energy" mean</h2>
+      <p><b style="color:var(--accent)">Rank</b> = the number of <b>genuinely independent patterns</b> in a matrix — i.e. how many singular values aren't ≈ 0. A table stuffed with numbers that's really "2 tastes + noise" has <b>rank 2</b>. Low rank = lots of redundancy = squeezable. <b>How to find it:</b> run SVD and count the σ's that aren't tiny — look for the cliff in the bars below.</p>
+      <p><b class="sc">Energy</b> — "how much of the matrix" your kept patterns explain. Keep the patterns holding 99% of the energy and you toss only 1% (the noise) for a big size cut. <b>That one trade-off is rank, energy, compression, and denoising — all the same move.</b></p>
+    </div>
+    <div class="card">
+      <h2>A is a sum of rank-1 layers</h2>
+      <div class="eq">A = σ₁ u₁v₁<sup>T</sup> + σ₂ u₂v₂<sup>T</sup> + … &nbsp;<span style="color:var(--muted);font-size:14px">(each piece = one pattern × its strength σ)</span></div>
+      <p>SVD restacks A as a pile of <b>simple patterns</b>, strongest first. Keep the first k and drop the rest → the <b>best possible</b> rebuild you can make with k patterns (provably — nothing with k patterns beats it). The bars below are the singular values of a random 6×6 — pick how many to keep.</p>
+      <label>Keep top <b id="k-label" class="val">6</b> singular values</label>
+      <input id="k-slider" type="range" min="1" max="6" value="6">
+      <div class="bars" id="sv-bars"></div>
+      <div style="margin-top:16px" class="grid2">
+        <div><h3>Original A</h3><div id="rank-orig"></div></div>
+        <div><h3>Rank-k reconstruction</h3><div id="rank-recon"></div></div>
+      </div>
+      <p class="stat" style="margin-top:14px">Energy captured: <b id="energy">100%</b> · Difference from original: <b id="err">0.00</b></p>
+      <button class="act" id="rank-new">new random matrix</button>
+    </div>
+    <div class="card">
+      <h2>▶ See the layers stack up (as colors)</h2>
+      <p>Numbers are hard to read. Same matrices as <b>colors</b> (gold = positive, blue = negative). Each <span class="mono">σₖ uₖvₖᵀ</span> is one outer product — the simplest matrix there is. Slider above drives this too.</p>
+      <button class="act" id="layer-next">▶ add next layer</button>
+      <button class="act ghost" id="layer-reset">↺ start over</button>
+      <button class="act ghost" id="layer-auto">⏩ auto-play (slow)</button>
+      <div id="layer-cap" class="caption" style="margin-top:10px">Press "add next layer" to stack them one at a time.</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;align-items:flex-end">
+        <div><div class="cap">layer added:<br>σₖ·uₖvₖᵀ</div><canvas id="hm-layer" width="150" height="150"></canvas></div>
+        <div style="font-size:22px;color:var(--muted);padding-bottom:60px">+…=</div>
+        <div><div class="cap">running sum<br>(rank-k)</div><canvas id="hm-sum" width="150" height="150"></canvas></div>
+        <div style="font-size:22px;color:var(--muted);padding-bottom:60px">→</div>
+        <div><div class="cap">target<br>A</div><canvas id="hm-target" width="150" height="150"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎵 If you know Fourier series — it's the same idea</h2>
+      <p>A Fourier series builds a signal from a sum of simple waves, biggest first. SVD builds a matrix from a sum of simple rank-1 layers, biggest σ first. Same move:</p>
+      <div style="overflow-x:auto"><table class="mat" style="font-family:inherit;text-align:left;width:100%">
+        <tr><td></td><td><b class="vc">Fourier series</b></td><td><b class="sc">SVD</b></td></tr>
+        <tr><td style="color:var(--muted)">the thing</td><td>a signal</td><td>a matrix</td></tr>
+        <tr><td style="color:var(--muted)">building block</td><td>a sine/cosine wave</td><td>a rank-1 layer u<sub>k</sub>v<sub>k</sub>ᵀ</td></tr>
+        <tr><td style="color:var(--muted)">its weight</td><td>amplitude</td><td>singular value σ<sub>k</sub></td></tr>
+        <tr><td style="color:var(--muted)">keep k terms</td><td>smooth approximation</td><td>best rank-k matrix</td></tr>
+        <tr><td style="color:var(--muted)">"energy"</td><td>Σ amplitude²</td><td>Σ σ²</td></tr>
+      </table></div>
+      <p>Each layer bumps the rank by 1 — exactly like adding one more harmonic to a Fourier partial sum.</p>
+      <p class="note"><b>The twist:</b> Fourier uses fixed, pre-chosen waves — the same set for every signal. SVD <b>learns its own building blocks from the data</b>, so its truncation is the best one possible for that exact matrix. In a line: <b>SVD is a Fourier series that discovers its own waves.</b></p>
+    </div>
+
+    <div class="card">
+      <h2>▶ Fourier in motion — adding harmonics = adding layers</h2>
+      <p>Each spinning circle is one wave (one "layer"). Their stacked tip (<span style="color:var(--u)">pink</span>) traces the curve on the right (<span class="vc">green</span>). Add harmonics → the curve snaps toward a sharp <b>square wave</b> — the exact same way adding rank-1 layers snaps toward A.</p>
+      <label>harmonics / layers = <b id="fr-k-label" class="val">3</b></label>
+      <input id="fr-k" type="range" min="1" max="25" step="2" value="3">
+      <canvas id="fourier" width="680" height="300"></canvas>
+      <p class="note">1 harmonic = a lone sine (rank-1). Crank it: each smaller circle sharpens the corners a little more — and just like SVD's σ's, the early ones do nearly all the work.</p>
+    </div>
+  </div>
+
+  <!-- ===== 6 · IMAGE ===== -->
+  <div class="panel" id="img">
+    <div class="card">
+      <h2>Compress a real image with SVD</h2>
+      <p>This is the <b>exact same move</b> as the Netflix table (Tab 0) — because a grayscale image <i>is</i> a matrix, where each number is a pixel's brightness. SVD it, keep the top-k patterns, reconstruct. A 1000×1000 photo is a million numbers, yet often only ~30 patterns make it look right. Quality vs. storage:</p>
+      <label>Rank k = <b id="img-k-label" class="val">20</b></label>
+      <input id="img-k" type="range" min="1" max="64" value="20">
+      <div class="grid2" style="margin-top:8px">
+        <div><div class="cap">original (rank 64)</div><canvas id="img-orig" width="256" height="256"></canvas></div>
+        <div><div class="cap">rank-k</div><canvas id="img-recon" width="256" height="256"></canvas></div>
+      </div>
+      <p class="stat" style="margin-top:14px">
+        Stored: <b id="img-store">—</b> vs original <b id="img-full">—</b> ·
+        Compression: <b id="img-ratio">—</b> · Energy kept: <b id="img-energy">—</b></p>
+      <p class="note">Each pattern you keep costs a little storage; each one you drop saves it (watch the numbers above). Even a handful keeps the image recognizable — most of what your eye needs lives in the first few patterns.</p>
+    </div>
+  </div>
+
+  <!-- ===== GLOSSARY ===== -->
+  <div class="panel" id="gloss">
+    <div class="card">
+      <h2>📖 Every term on this page, in plain words</h2>
+      <p class="note">Skim it once, then come back whenever a symbol stops making sense. Nothing here assumes the others.</p>
+    </div>
+    <div class="card">
+      <h3>The basics</h3>
+      <dl class="gl">
+        <dt>Scalar</dt><dd>A single number. Like <span class="mono">3</span>.</dd>
+        <dt>Vector</dt><dd>A list of numbers = an arrow in space. <span class="mono">(2, 3)</span> is an arrow 2 right, 3 up.</dd>
+        <dt>Matrix</dt><dd>A grid of numbers. Also: a <b>machine that moves vectors</b> (Tab 1). That dual meaning is the whole game.</dd>
+        <dt>Dimension (m×n)</dt><dd>Size of a matrix: m rows, n columns. A 6×5 matrix has 6 rows, 5 columns.</dd>
+        <dt>A·x (matrix × vector)</dt><dd>Apply the machine A to arrow x → a new arrow. Each output = one row of A "dotted" with x.</dd>
+        <dt>Dot product</dt><dd>Multiply two lists entry-by-entry, add up. <span class="mono">(2,1)·(3,1) = 2·3+1·1 = 7</span>.</dd>
+        <dt>Transpose (ᵀ)</dt><dd>Flip a matrix over its diagonal — rows become columns. <span class="mono">Vᵀ</span> = "V flipped."</dd>
+        <dt>Identity (I)</dt><dd>The "do-nothing" matrix. <span class="mono">I·x = x</span>. 1's on the diagonal, 0 elsewhere.</dd>
+        <dt>Diagonal matrix</dt><dd>Only the diagonal is nonzero. Acts as a pure stretch — no rotation.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>Eigen- &amp; singular things</h3>
+      <dl class="gl">
+        <dt><span class="vc">Eigenvector</span></dt><dd>A direction that A only <b>stretches, never turns</b> (Tab 2). Most matrices have a few; some have none.</dd>
+        <dt><span class="sc">Eigenvalue (λ)</span></dt><dd>How much that eigenvector gets stretched. <span class="mono">A·v = λ·v</span>.</dd>
+        <dt><span class="sc">Singular value (σ)</span></dt><dd>A stretch factor along one of SVD's axes. Always ≥ 0. The bulletproof version of an eigenvalue — <b>every</b> matrix has them. σ&gt;1 stretches, σ=1 no change, σ=0 flattens.</dd>
+        <dt>Orthonormal / rotation</dt><dd>A set of directions that are all perpendicular and length 1. A matrix built from them just <b>rotates</b> space (never resizes). U and V are these.</dd>
+        <dt><span class="uc">U</span>, <span class="sc">Σ</span>, <span class="vc">V</span></dt><dd>The three pieces of SVD: <span class="vc">Vᵀ</span> rotates the input, <span class="sc">Σ</span> stretches by the σ's, <span class="uc">U</span> rotates the output. <span class="mono">A = UΣVᵀ</span>.</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>The big ideas</h3>
+      <dl class="gl">
+        <dt style="color:var(--accent)">Rank ★</dt><dd>The number of <b>genuinely independent patterns</b> in a matrix = how many singular values are nonzero. A 6×5 ratings table that's really "2 tastes + noise" has <b>rank 2</b>, even though it's full of numbers. Low rank = lots of redundancy = squeezable. <b>How to find it:</b> run SVD and count the singular values that aren't ≈0 — on Tab 0 you see 2 big and 3 tiny, so rank 2. <i>(This is what Tab 5 is named after.)</i></dd>
+        <dt>Outer product / rank-1</dt><dd>One column times one row → a full matrix that's the simplest kind (rank 1). <span class="mono">σ·u·vᵀ</span> is one of these — a single pattern.</dd>
+        <dt>Low-rank approximation</dt><dd>Keep only the top-k singular values → the best possible rebuild of A using k patterns (Tabs 5 &amp; 6). The core use of SVD.</dd>
+        <dt>Energy</dt><dd>Σσᵢ². "How much of the matrix" your kept patterns explain. 99% energy in k=2 means 2 patterns is plenty.</dd>
+        <dt>Condition number</dt><dd>σ₁ / σ_last. Big = the matrix nearly flattens some direction → unstable to invert.</dd>
+        <dt>PCA</dt><dd>"Principal Component Analysis" — SVD applied to centered data to find its main axes of variation. Same machinery.</dd>
+      </dl>
+    </div>
+  </div>
+  </div>
+  </main>
+</div>
+
+<div id="search-modal">
+  <div class="search-box">
+    <input id="search-input" type="text" placeholder="Search terms… (e.g. rank, sigma, eigenvector)" autocomplete="off">
+    <div class="search-results" id="search-results"></div>
+  </div>
+</div>
+
+<script>
+// ---------- tabs ----------
+// `#<tab>` deep-links a panel (e.g. svd/#idea), so Footsteps can link straight
+// to the relevant section and tabs are shareable.
+function selectTab(name) {
+  const tab = document.querySelector(`.tab[data-tab="${name}"]`);
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(name).classList.add('active');
+  if (history.replaceState) history.replaceState(null, '', `#${name}`);
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => selectTab(t.dataset.tab));
+selectTab((location.hash || '').replace(/^#/, '') || 'why');
+
+// ---------- generic SVD: one-sided Jacobi. A(m x n) -> {U,S,V} ----------
+function svd(Ain) {
+  const m = Ain.length, n = Ain[0].length;
+  const A = Ain.map(r => r.slice());
+  const V = Array.from({length:n}, (_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+  const eps = 1e-10;
+  for (let sweep=0; sweep<60; sweep++) {
+    let off=0;
+    for (let p=0;p<n-1;p++) for (let q=p+1;q<n;q++) {
+      let alpha=0,beta=0,gamma=0;
+      for (let i=0;i<m;i++){ alpha+=A[i][p]*A[i][p]; beta+=A[i][q]*A[i][q]; gamma+=A[i][p]*A[i][q]; }
+      off+=Math.abs(gamma);
+      if (Math.abs(gamma)<eps) continue;
+      const zeta=(beta-alpha)/(2*gamma);
+      // sgn(0) must be +1, not 0 — else equal-norm columns never rotate (rotation should be 45°). Was silently breaking SVD.
+      const sgn = zeta>=0 ? 1 : -1;
+      const t = sgn/(Math.abs(zeta)+Math.sqrt(1+zeta*zeta));
+      const c=1/Math.sqrt(1+t*t), s=c*t;
+      for (let i=0;i<m;i++){ const a=A[i][p],b=A[i][q]; A[i][p]=c*a-s*b; A[i][q]=s*a+c*b; }
+      for (let i=0;i<n;i++){ const a=V[i][p],b=V[i][q]; V[i][p]=c*a-s*b; V[i][q]=s*a+c*b; }
+    }
+    if (off<eps) break;
+  }
+  const S=new Array(n).fill(0), U=Array.from({length:m},()=>new Array(n).fill(0));
+  for (let j=0;j<n;j++){ let nm=0; for(let i=0;i<m;i++) nm+=A[i][j]*A[i][j]; nm=Math.sqrt(nm);
+    S[j]=nm; if(nm>eps) for(let i=0;i<m;i++) U[i][j]=A[i][j]/nm; }
+  const idx=S.map((_,i)=>i).sort((a,b)=>S[b]-S[a]);
+  return { U:U.map(r=>idx.map(i=>r[i])), S:idx.map(i=>S[i]), V:V.map(r=>idx.map(i=>r[i])) };
+}
+function apply(M,p){ return [M[0][0]*p[0]+M[0][1]*p[1], M[1][0]*p[0]+M[1][1]*p[1]]; }
+// render a matrix as a big bracketed grid, color-coded
+function mtxHTML(M,colorVar,cell){
+  const cols=M[0].length;
+  const cells=M.flat().map(v=>`<span>${(v>=0?' ':'')+v.toFixed(2)}</span>`).join('');
+  return `<span class="mtx" style="grid-template-columns:repeat(${cols},${cell||'2.9em'});font-size:15px;${colorVar?`color:var(${colorVar})`:''}">${cells}</span>`;
+}
+
+// ---------- shared 2D plane helper ----------
+function plane(ctx,W,H,sc){
+  const cx=W/2, cy=H/2;
+  const X=x=>cx+x*sc, Y=y=>cy-y*sc;
+  function grid(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    for(let i=-6;i<=6;i++){ ctx.beginPath();ctx.moveTo(X(i),0);ctx.lineTo(X(i),H);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(0,Y(i));ctx.lineTo(W,Y(i));ctx.stroke(); }
+    ctx.strokeStyle='#484f58'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+  }
+  function arrow(x,y,col,lw){
+    ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw||3;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(X(x),Y(y)); ctx.stroke();
+    const ang=Math.atan2(-(Y(y)-cy),(X(x)-cx));
+    ctx.beginPath(); ctx.moveTo(X(x),Y(y));
+    ctx.lineTo(X(x)-11*Math.cos(ang-0.4),Y(y)+11*Math.sin(ang-0.4));
+    ctx.lineTo(X(x)-11*Math.cos(ang+0.4),Y(y)+11*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fill();
+  }
+  return { X, Y, cx, cy, grid, arrow, sc, W, H };
+}
+// convert a pointer event to math coords on a canvas-with-plane
+function eventToMath(canvas, P, e){
+  const r=canvas.getBoundingClientRect();
+  const px=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  const py=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+  const x=(px*(canvas.width/r.width)-P.cx)/P.sc;
+  const y=-(py*(canvas.height/r.height)-P.cy)/P.sc;
+  return [x,y];
+}
+
+// ===================================================================
+// TAB 1 — matrix * vector
+// ===================================================================
+(function(){
+  const A=[[2,1],[1,2]];
+  let x=[1.3,0.6], hl=-1;
+  const cv=document.getElementById('mv-canvas');
+  const ctx=cv.getContext('2d'), P=plane(ctx,400,400,55);
+  function draw(){
+    P.grid();
+    const b=apply(A,x);
+    // highlight the row being computed by drawing its contribution
+    P.arrow(b[0],b[1],'#f778ba',3);
+    P.arrow(x[0],x[1],'#56d364',3);
+    const f=n=>(n>=0?' ':'')+n.toFixed(2);
+    const hi=(r)=> hl===r ? 'background:#1f6feb33;border-radius:4px;padding:0 3px':'';
+    document.getElementById('mv-readout').innerHTML =
+      `<div class="vc">x</div>(${x[0].toFixed(2)}, ${x[1].toFixed(2)})<br>`+
+      `<div style="margin-top:8px">A</div>[ 2&nbsp; 1 ]<br>[ 1&nbsp; 2 ]<br>`+
+      `<div class="uc" style="margin-top:8px">b = A·x</div>`+
+      `<span style="${hi(0)}">b₀ = 2·(${x[0].toFixed(2)}) + 1·(${x[1].toFixed(2)}) = <b class="val">${f(b[0])}</b></span><br>`+
+      `<span style="${hi(1)}">b₁ = 1·(${x[0].toFixed(2)}) + 2·(${x[1].toFixed(2)}) = <b class="val">${f(b[1])}</b></span>`;
+  }
+  let drag=false;
+  const set=e=>{ x=eventToMath(cv,P,e); draw(); e.preventDefault(); };
+  cv.addEventListener('pointerdown',e=>{drag=true;set(e);});
+  cv.addEventListener('pointermove',e=>{if(drag)set(e);});
+  window.addEventListener('pointerup',()=>drag=false);
+  document.getElementById('mv-play').onclick=()=>{
+    hl=0; draw(); setTimeout(()=>{hl=1;draw();},900); setTimeout(()=>{hl=-1;draw();},1800);
+  };
+  draw();
+})();
+
+// ===================================================================
+// TAB 2 — eigenvectors
+// ===================================================================
+(function(){
+  let A=[[2,1],[1,2]];
+  let v=[1,0.35]; // gets normalized in draw
+  const cv=document.getElementById('eig-canvas');
+  const ctx=cv.getContext('2d'), P=plane(ctx,400,400,70);
+  function eigs(M){
+    const a=M[0][0],b=M[0][1],c=M[1][0],d=M[1][1];
+    const T=a+d, D=a*d-b*c, disc=T*T/4-D;
+    if(disc<-1e-9) return [];
+    const root=Math.sqrt(Math.max(0,disc));
+    const ls=[T/2+root, T/2-root];
+    return ls.map(l=>{
+      let vec;
+      if(Math.abs(b)>1e-9) vec=[b, l-a];
+      else if(Math.abs(c)>1e-9) vec=[l-d, c];
+      else vec = Math.abs(l-a)<1e-9 ? [1,0] : [0,1]; // diagonal
+      const n=Math.hypot(vec[0],vec[1])||1;
+      return { l, v:[vec[0]/n,vec[1]/n] };
+    });
+  }
+  function draw(){
+    P.grid();
+    const E=eigs(A);
+    // draw eigen-lines faintly
+    ctx.strokeStyle='#56d36433'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]);
+    E.forEach(e=>{ ctx.beginPath();
+      ctx.moveTo(P.X(-e.v[0]*6),P.Y(-e.v[1]*6)); ctx.lineTo(P.X(e.v[0]*6),P.Y(e.v[1]*6)); ctx.stroke(); });
+    ctx.setLineDash([]);
+    const n=Math.hypot(v[0],v[1])||1; const vn=[v[0]/n,v[1]/n];
+    const Av=apply(A,vn);
+    // alignment
+    const angV=Math.atan2(vn[1],vn[0]), angA=Math.atan2(Av[1],Av[0]);
+    let d=Math.abs(angA-angV)%(Math.PI*2); d=Math.min(d,Math.PI*2-d);
+    const gap=Math.min(d,Math.abs(d-Math.PI));
+    const locked=gap<0.04;
+    if(locked){ ctx.shadowBlur=25; ctx.shadowColor='#56d364'; }
+    P.arrow(Av[0],Av[1],'#f778ba',3.5);
+    P.arrow(vn[0],vn[1],locked?'#7ee787':'#56d364',3.5);
+    ctx.shadowBlur=0;
+    const lam=(vn[0]*Av[0]+vn[1]*Av[1]); // λ = v·Av (v unit)
+    document.getElementById('eig-readout').innerHTML =
+      `<div>A = <span class="mtx" style="grid-template-columns:repeat(2,2em)"><span>${A[0][0]}</span><span>${A[0][1]}</span><span>${A[1][0]}</span><span>${A[1][1]}</span></span></div>`+
+      `<div class="vc" style="margin-top:8px">v</div>(${vn[0].toFixed(2)}, ${vn[1].toFixed(2)})<br>`+
+      `<div class="uc" style="margin-top:6px">A·v</div>(${Av[0].toFixed(2)}, ${Av[1].toFixed(2)})<br>`+
+      `<div style="margin-top:6px">angle gap: <b class="val">${(gap*180/Math.PI).toFixed(1)}°</b></div>`+
+      (locked
+        ? `<div class="lock" style="margin-top:8px">★ EIGENVECTOR! λ = ${lam.toFixed(2)}</div>`
+        : `<div style="margin-top:8px;color:var(--muted)">not aligned — keep dragging</div>`)+
+      `<div style="margin-top:10px;color:var(--muted)">${E.length? 'eigen-lines drawn dashed':'no real eigenvectors (pure rotation)'}</div>`;
+    return E;
+  }
+  let drag=false;
+  const set=e=>{ v=eventToMath(cv,P,e); draw(); e.preventDefault(); };
+  cv.addEventListener('pointerdown',e=>{drag=true;set(e);});
+  cv.addEventListener('pointermove',e=>{if(drag)set(e);});
+  window.addEventListener('pointerup',()=>drag=false);
+  document.getElementById('eig-snap').onclick=()=>{
+    const E=eigs(A); if(!E.length) return;
+    const cur=Math.atan2(v[1],v[0]);
+    // nearest eigen direction (consider both ± )
+    let best=null,bd=9;
+    E.forEach(e=>{ [0,Math.PI].forEach(off=>{
+      const a=Math.atan2(e.v[1],e.v[0])+off;
+      let d=Math.abs(((a-cur+Math.PI)%(Math.PI*2))-Math.PI);
+      if(d<bd){bd=d;best=a;} }); });
+    const start=cur, t0=performance.now();
+    (function step(t){ const k=Math.min(1,(t-t0)/450);
+      const ang=start+(best-start)*(k*k*(3-2*k));
+      v=[Math.cos(ang),Math.sin(ang)]; draw();
+      if(k<1) requestAnimationFrame(step); })(t0);
+  };
+  document.querySelectorAll('[data-epreset]').forEach(b=>b.onclick=()=>{
+    const p=b.dataset.epreset.split(',').map(Number);
+    A=[[p[0],p[1]],[p[2],p[3]]]; draw();
+  });
+  draw();
+})();
+
+// ===================================================================
+// TAB 4 — geometry + animated decomposition
+// ===================================================================
+const geoIn=document.getElementById('geo-in'), geoOut=document.getElementById('geo-out');
+const Pin=plane(geoIn.getContext('2d'),400,400,70), Pout=plane(geoOut.getContext('2d'),400,400,70);
+function getA(){ return [
+  [+document.getElementById('a00').value,+document.getElementById('a01').value],
+  [+document.getElementById('a10').value,+document.getElementById('a11').value] ]; }
+function drawGeo(){
+  const A=getA(), {U,S,V}=svd(A);
+  Pin.grid();
+  const ic=geoIn.getContext('2d');
+  ic.strokeStyle='#58a6ff'; ic.lineWidth=2; ic.beginPath();
+  for(let a=0;a<=6.3;a+=0.05){ const x=Math.cos(a),y=Math.sin(a);
+    a===0?ic.moveTo(Pin.X(x),Pin.Y(y)):ic.lineTo(Pin.X(x),Pin.Y(y)); } ic.stroke();
+  Pin.arrow(V[0][0],V[1][0],'#56d364'); Pin.arrow(V[0][1],V[1][1],'#3a8c42');
+  Pout.grid();
+  const oc=geoOut.getContext('2d');
+  oc.strokeStyle='#f778ba'; oc.lineWidth=2; oc.beginPath();
+  for(let a=0;a<=6.3;a+=0.05){ const p=apply(A,[Math.cos(a),Math.sin(a)]);
+    a===0?oc.moveTo(Pout.X(p[0]),Pout.Y(p[1])):oc.lineTo(Pout.X(p[0]),Pout.Y(p[1])); } oc.stroke();
+  Pout.arrow(U[0][0]*S[0],U[1][0]*S[0],'#f778ba'); Pout.arrow(U[0][1]*S[1],U[1][1]*S[1],'#a63b6f');
+  const Vt=[[V[0][0],V[1][0]],[V[0][1],V[1][1]]];
+  const Sd=[[S[0],0],[0,S[1]]];
+  const Um=[[U[0][0],U[0][1]],[U[1][0],U[1][1]]];
+  document.getElementById('geo-readout').innerHTML =
+    `<div style="margin-bottom:12px;font-size:14px"><span class="val">σ₁ = ${S[0].toFixed(2)}</span> &nbsp;&nbsp; <span class="val">σ₂ = ${S[1].toFixed(2)}</span>`+
+    ` ${S[1]<0.05?'&nbsp;·&nbsp;<span style="color:var(--muted)">⚠ σ₂≈0 — the output flattens to a line</span>':''}</div>`+
+    `<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:17px">`+
+    `A = ${mtxHTML(Um,'--u')} ${mtxHTML(Sd,'--sigma')} ${mtxHTML(Vt,'--v')}</div>`+
+    `<div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.8">`+
+    `<span class="uc">▮ U</span> rotate the output &nbsp; <span class="sc">▮ Σ</span> stretch by σ &nbsp; <span class="vc">▮ Vᵀ</span> rotate the input</div>`;
+  morphReset();
+}
+['a00','a01','a10','a11'].forEach(id=>document.getElementById(id).addEventListener('input',drawGeo));
+document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{
+  const v=b.dataset.preset.split(',');
+  ['a00','a01','a10','a11'].forEach((id,i)=>document.getElementById(id).value=v[i]);
+  drawGeo();
+});
+
+// --- animated morph ---
+const animCv=document.getElementById('anim-canvas');
+const Pa=plane(animCv.getContext('2d'),440,400,75);
+let stages=[], basisStages=[], capText=[];
+function morphReset(){
+  const A=getA(), {U,S,V}=svd(A);
+  const Vt=[[V[0][0],V[1][0]],[V[0][1],V[1][1]]];
+  const Sig=[[S[0],0],[0,S[1]]];
+  const Um=[[U[0][0],U[0][1]],[U[1][0],U[1][1]]];
+  const chain=p=>{ const s1=apply(Vt,p),s2=apply(Sig,s1),s3=apply(Um,s2); return [p,s1,s2,s3]; };
+  // grid of dots in unit disk
+  const pts=[];
+  for(let gx=-1;gx<=1.001;gx+=0.2) for(let gy=-1;gy<=1.001;gy+=0.2)
+    if(gx*gx+gy*gy<=1.02) pts.push([gx,gy]);
+  for(let a=0;a<6.28;a+=0.22) pts.push([Math.cos(a),Math.sin(a)]); // ring
+  stages = pts.map(p=>({ hue:(Math.atan2(p[1],p[0])*180/Math.PI+360)%360, s:chain(p) }));
+  basisStages = [chain([1,0]), chain([0,1])];
+  const f=n=>n.toFixed(2);
+  capText = [
+    `<b class="vc">Step 1 — Vᵀ (rotate)</b><br>turn the cloud so its key directions line up with the axes.`,
+    `<b class="sc">Step 2 — Σ (stretch)</b><br>scale x by σ₁=${f(S[0])}, y by σ₂=${f(S[1])}. Only step that resizes.`,
+    `<b class="uc">Step 3 — U (rotate)</b><br>turn into the output frame. Done — this equals A·x.`
+  ];
+  document.getElementById('anim-math').innerHTML =
+    `<span id="m-vt"><span class="vc">Vᵀ</span> ${mtxHTML(Vt,'--v','2.4em')}</span>`+
+    `<span class="mulop">→</span>`+
+    `<span id="m-sig"><span class="sc">Σ</span> ${mtxHTML(Sig,'--sigma','2.4em')}</span>`+
+    `<span class="mulop">→</span>`+
+    `<span id="m-u"><span class="uc">U</span> ${mtxHTML(Um,'--u','2.4em')}</span>`;
+  drawFrame(scrubT());
+}
+function scrubT(){ return +document.getElementById('anim-scrub').value/100; }
+function lerp(a,b,e){ return [a[0]+(b[0]-a[0])*e, a[1]+(b[1]-a[1])*e]; }
+function smooth(t){ return t*t*(3-2*t); }
+function drawFrame(t){
+  t=Math.max(0,Math.min(3,t));
+  const seg=Math.min(2,Math.floor(t)), e=smooth(t-seg);
+  ['m-vt','m-sig','m-u'].forEach((id,k)=>{const el=document.getElementById(id);if(el)el.classList.toggle('activemat',k===seg);});
+  Pa.grid();
+  const ctx=animCv.getContext('2d');
+  // dashed outline = the TRUE A·(unit circle). Dots must land exactly on it at step 3 — that's the proof UΣVᵀ = A.
+  const Atrue=getA();
+  ctx.strokeStyle='#8b949e88'; ctx.setLineDash([4,4]); ctx.lineWidth=1.5; ctx.beginPath();
+  for(let a=0;a<=6.3;a+=0.05){ const p=apply(Atrue,[Math.cos(a),Math.sin(a)]);
+    a===0?ctx.moveTo(Pa.X(p[0]),Pa.Y(p[1])):ctx.lineTo(Pa.X(p[0]),Pa.Y(p[1])); }
+  ctx.stroke(); ctx.setLineDash([]);
+  stages.forEach(d=>{
+    const p=lerp(d.s[seg],d.s[seg+1],e);
+    ctx.fillStyle=`hsl(${d.hue},75%,62%)`;
+    ctx.beginPath(); ctx.arc(Pa.X(p[0]),Pa.Y(p[1]),3.4,0,6.3); ctx.fill();
+  });
+  const b1=lerp(basisStages[0][seg],basisStages[0][seg+1],e);
+  const b2=lerp(basisStages[1][seg],basisStages[1][seg+1],e);
+  Pa.arrow(b1[0],b1[1],'#ffffff',2.5); Pa.arrow(b2[0],b2[1],'#ff7b72',2.5);
+  document.getElementById('anim-cap').innerHTML = capText[seg] || capText[2];
+}
+let raf=null;
+function play(){
+  cancelAnimationFrame(raf);
+  let t=scrubT(); if(t>=2.99) t=0;
+  let last=performance.now();
+  (function loop(now){
+    const dt=(now-last)/1000; last=now;
+    t+=dt*0.9; // ~3.3s total
+    document.getElementById('anim-scrub').value=Math.min(300,t*100);
+    drawFrame(t);
+    if(t<3) raf=requestAnimationFrame(loop);
+  })(last);
+}
+document.getElementById('anim-play').onclick=play;
+document.getElementById('anim-reset').onclick=()=>{cancelAnimationFrame(raf);
+  document.getElementById('anim-scrub').value=0; drawFrame(0);};
+document.getElementById('anim-scrub').oninput=()=>{cancelAnimationFrame(raf); drawFrame(scrubT());};
+drawGeo();
+
+// ===================================================================
+// TAB 5 — rank, energy, layer heatmaps
+// ===================================================================
+let rankA, rankSVD;
+function randMat(n){ return Array.from({length:n},()=>Array.from({length:n},()=>+(Math.random()*10-5).toFixed(1))); }
+function matToTable(M){ return '<table class="mat">'+M.map(r=>'<tr>'+r.map(x=>`<td>${x.toFixed(1)}</td>`).join('')+'</tr>').join('')+'</table>'; }
+function reconstruct(U,S,V,k){
+  const m=U.length,n=V.length, R=Array.from({length:m},()=>new Array(n).fill(0));
+  for(let t=0;t<k;t++) for(let i=0;i<m;i++) for(let j=0;j<n;j++) R[i][j]+=S[t]*U[i][t]*V[j][t];
+  return R;
+}
+function heat(canvas,M,max){
+  const ctx=canvas.getContext('2d'),R=M.length,C=M[0].length,w=canvas.width,h=canvas.height;
+  const cw=w/C, ch=h/R; ctx.clearRect(0,0,w,h);
+  for(let r=0;r<R;r++) for(let c=0;c<C;c++){
+    const val=M[r][c], a=Math.min(1,Math.abs(val)/(max||1));
+    ctx.fillStyle = val>=0?`rgba(227,179,65,${a})`:`rgba(88,166,255,${a})`;
+    ctx.fillRect(c*cw,r*ch,cw-1,ch-1);
+  }
+}
+function drawRankHeat(){
+  if(!rankSVD) return;
+  const k=+document.getElementById('k-slider').value;
+  let max=0; rankA.forEach(r=>r.forEach(v=>max=Math.max(max,Math.abs(v))));
+  const sum=reconstruct(rankSVD.U,rankSVD.S,rankSVD.V,k);
+  // the single layer just added (index k-1)
+  const i=k-1, layer=Array.from({length:6},()=>new Array(6).fill(0));
+  for(let r=0;r<6;r++) for(let c=0;c<6;c++) layer[r][c]=rankSVD.S[i]*rankSVD.U[r][i]*rankSVD.V[c][i];
+  heat(document.getElementById('hm-layer'),layer,max);
+  heat(document.getElementById('hm-sum'),sum,max);
+  heat(document.getElementById('hm-target'),rankA,max);
+  const pct=(rankSVD.S.slice(0,k).reduce((a,s)=>a+s*s,0)/rankSVD.S.reduce((a,s)=>a+s*s,0)*100).toFixed(0);
+  document.getElementById('layer-cap').innerHTML =
+    `<b>Layer ${k} of 6.</b> Just added σ<sub>${k}</sub> = ${rankSVD.S[i].toFixed(2)} × (u<sub>${k}</sub>v<sub>${k}</sub>ᵀ) — one rank-1 pattern (left box). `+
+    `The running sum (middle) is now the best rank-${k} version of A, holding <b class="val">${pct}%</b> of its energy. `+
+    (k===6?'All 6 layers → exact match. ✓ <b>lossless</b>, but no savings.'
+          :`See how it already resembles A? The first layers do the heavy lifting — that\'s why dropping the last few barely hurts (lossy, but cheap). ${6-k} to go.`);
+}
+function drawRank(){
+  const k=+document.getElementById('k-slider').value;
+  document.getElementById('k-label').textContent=k;
+  const R=reconstruct(rankSVD.U,rankSVD.S,rankSVD.V,k);
+  document.getElementById('rank-recon').innerHTML=matToTable(R);
+  document.querySelectorAll('#sv-bars .bar').forEach(b=>b.classList.toggle('off',+b.dataset.i>=k));
+  const totalE=rankSVD.S.reduce((a,s)=>a+s*s,0), keptE=rankSVD.S.slice(0,k).reduce((a,s)=>a+s*s,0);
+  document.getElementById('energy').textContent=(keptE/totalE*100).toFixed(1)+'%';
+  let err=0; for(let i=0;i<6;i++)for(let j=0;j<6;j++){const d=rankA[i][j]-R[i][j];err+=d*d;}
+  document.getElementById('err').textContent=Math.sqrt(err).toFixed(2);
+  drawRankHeat();
+}
+function newRank(){
+  rankA=randMat(6); rankSVD=svd(rankA);
+  document.getElementById('rank-orig').innerHTML=matToTable(rankA);
+  const max=rankSVD.S[0];
+  document.getElementById('sv-bars').innerHTML=rankSVD.S.map((s,i)=>
+    `<div class="bar" data-i="${i}" style="height:${Math.max(4,s/max*100)}%"><span>σ${i+1}<br>${s.toFixed(1)}</span></div>`).join('');
+  drawRank();
+}
+document.getElementById('k-slider').oninput=drawRank;
+document.getElementById('rank-new').onclick=newRank;
+(function(){
+  const sl=document.getElementById('k-slider');
+  let timer=null;
+  document.getElementById('layer-next').onclick=()=>{ clearInterval(timer); let k=+sl.value; k=k>=6?1:k+1; sl.value=k; drawRank(); };
+  document.getElementById('layer-reset').onclick=()=>{ clearInterval(timer); sl.value=1; drawRank(); };
+  document.getElementById('layer-auto').onclick=()=>{ clearInterval(timer); let k=1; sl.value=1; drawRank();
+    timer=setInterval(()=>{ k++; if(k>6){clearInterval(timer);return;} sl.value=k; drawRank(); },1500); };
+})();
+newRank();
+
+// ===================================================================
+// TAB 6 — image compression
+// ===================================================================
+const N=64;
+(function(){
+  const img=Array.from({length:N},()=>new Array(N).fill(0));
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const u=x/N,v=y/N; let val=0.5+0.3*Math.sin(u*8)+0.2*Math.cos(v*5);
+    const dx=u-0.5,dy=v-0.5,r=Math.sqrt(dx*dx+dy*dy);
+    if(r<0.28) val+=0.35;
+    if(Math.abs(u-v)<0.04) val+=0.25;
+    if(x>40&&x<55&&y>10&&y<25) val-=0.3;
+    img[y][x]=Math.max(0,Math.min(1,val));
+  }
+  const S=svd(img);
+  function paint(canvas,M){
+    const ctx=canvas.getContext('2d'), id=ctx.createImageData(N,N);
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+      const v=Math.max(0,Math.min(255,Math.round(M[y][x]*255))), o=(y*N+x)*4;
+      id.data[o]=id.data[o+1]=id.data[o+2]=v; id.data[o+3]=255;
+    }
+    const tmp=document.createElement('canvas'); tmp.width=N; tmp.height=N;
+    tmp.getContext('2d').putImageData(id,0,0);
+    ctx.imageSmoothingEnabled=false; ctx.clearRect(0,0,256,256); ctx.drawImage(tmp,0,0,256,256);
+  }
+  function draw(){
+    const k=+document.getElementById('img-k').value;
+    document.getElementById('img-k-label').textContent=k;
+    paint(document.getElementById('img-recon'),reconstruct(S.U,S.S,S.V,k));
+    const store=k*(N+N+1), full=N*N;
+    document.getElementById('img-store').textContent=store.toLocaleString();
+    document.getElementById('img-full').textContent=full.toLocaleString();
+    document.getElementById('img-ratio').textContent=(full/store).toFixed(1)+'×';
+    const tE=S.S.reduce((a,s)=>a+s*s,0), kE=S.S.slice(0,k).reduce((a,s)=>a+s*s,0);
+    document.getElementById('img-energy').textContent=(kE/tE*100).toFixed(1)+'%';
+  }
+  paint(document.getElementById('img-orig'),img);
+  document.getElementById('img-k').oninput=draw; draw();
+})();
+
+// ===================================================================
+// TAB 0 — why bother (movie ratings)
+// ===================================================================
+(function(){
+  const movies=['Mad Max','John Wick','Notebook','La La Land','Titanic'];
+  const users=['Alex','Bo','Cy','Dana','Eve','Finn'];
+  const R=[[5,4,1,2,1],[4,5,2,1,1],[5,5,1,1,2],[1,2,5,4,5],[2,1,4,5,4],[1,1,5,5,5]];
+  const S=svd(R);
+  document.getElementById('why-labels').innerHTML =
+    '<b>rows</b> = 6 people · <b>columns</b> = 5 movies · numbers = rating 1–5<br><br>'+
+    'action: '+movies.slice(0,2).join(', ')+'<br>romance: '+movies.slice(2).join(', ');
+  heat(document.getElementById('why-data'),R,5);
+  heat(document.getElementById('why-orig'),R,5);
+  const max=S.S[0];
+  document.getElementById('why-bars').innerHTML=S.S.map((s,i)=>
+    `<div class="bar" style="height:${Math.max(4,s/max*100)}%;background:${i<2?'var(--sigma)':'#444c56'}"><span>σ${i+1}<br>${s.toFixed(1)}</span></div>`).join('');
+  // pattern 2 (romance↔action) as ONE shared axis: movies above the line, people below.
+  (function(){
+    const cv=document.getElementById('why-axis'); if(!cv) return;
+    const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,mid=H/2,marg=90;
+    const sgn=S.V[0][1]<0?-1:1; // Mad Max (action) -> positive (right side)
+    const mov=movies.map((t,j)=>({t,v:S.V[j][1]*sgn,type:'m'}));
+    const ppl=users.map((t,i)=>({t,v:S.U[i][1]*sgn,type:'p'}));
+    const mx=Math.max(...[...mov,...ppl].map(o=>Math.abs(o.v)))||1;
+    const Xv=v=>W/2+v/mx*(W/2-marg);
+    const col=v=>v>=0?'#e3b341':'#58a6ff';
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#484f58'; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(40,mid);ctx.lineTo(W-40,mid);ctx.stroke();
+    ctx.strokeStyle='#30363d'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath();ctx.moveTo(W/2,28);ctx.lineTo(W/2,H-28);ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#6e7681'; ctx.font='13px sans-serif';
+    ctx.textAlign='left'; ctx.fillText('◀ romance', 40, 18);
+    ctx.textAlign='right'; ctx.fillText('action ▶', W-40, 18);
+    // stack labels vertically when points crowd the same spot (matching tastes coincide)
+    function place(arr){ arr.sort((a,b)=>a.v-b.v); let lx=-1e9,lvl=0;
+      arr.forEach(o=>{ const x=Xv(o.v); if(x-lx<64) lvl++; else lvl=0; lx=x; o.x=x; o.lvl=lvl; }); }
+    place(mov); place(ppl);
+    function band(arr,dir){
+      arr.forEach(o=>{
+        const mk=mid+dir*18, ly=mid+dir*(36+o.lvl*15), c=col(o.v);
+        ctx.strokeStyle=c+'55'; ctx.lineWidth=1; ctx.beginPath();ctx.moveTo(o.x,mk);ctx.lineTo(o.x,ly-dir*9);ctx.stroke();
+        ctx.fillStyle=c;
+        if(o.type==='m'){ const r=6; ctx.beginPath();ctx.moveTo(o.x,mk-r);ctx.lineTo(o.x+r,mk);ctx.lineTo(o.x,mk+r);ctx.lineTo(o.x-r,mk);ctx.closePath();ctx.fill(); }
+        else { ctx.beginPath();ctx.arc(o.x,mk,5,0,6.3);ctx.fill(); }
+        ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.fillStyle='#c9d1d9';
+        ctx.fillText(o.t,o.x,ly+(dir<0?0:4));
+      });
+    }
+    band(mov,-1); band(ppl,1);
+  })();
+  function draw(){
+    const k=+document.getElementById('why-k').value;
+    document.getElementById('why-k-label').textContent=k;
+    const Rk=reconstruct(S.U,S.S,S.V,k);
+    heat(document.getElementById('why-recon'),Rk,5);
+    const tE=S.S.reduce((a,s)=>a+s*s,0),kE=S.S.slice(0,k).reduce((a,s)=>a+s*s,0);
+    document.getElementById('why-energy').textContent=(kE/tE*100).toFixed(1)+'% of the data';
+  }
+  document.getElementById('why-k').oninput=draw; draw();
+
+  // recommendation engine: rank-2 predictions per person
+  const P2=reconstruct(S.U,S.S,S.V,2);
+
+  // geometric "taste map". Display coords are centered + normalized PER AXIS so the
+  // cloud fills the box. (Raw √σ-weighting makes pattern 1 dwarf pattern 2, collapsing
+  // every point onto one diagonal line — unreadable.) The pick comes from the true
+  // rank-2 ratings P2, never from the drawing, so display scaling can't lie about it.
+  const geoCv=document.getElementById('rec-geo');
+  let geoP=[],geoM=[];
+  if(geoCv){
+    const rp=users.map((_,i)=>[S.U[i][0],S.U[i][1]]);
+    const rm=movies.map((_,j)=>[S.V[j][0],S.V[j][1]]);
+    const all=[...rp,...rm];
+    const mean=[0,1].map(k=>all.reduce((a,p)=>a+p[k],0)/all.length);
+    const span=[0,1].map(k=>Math.max(...all.map(p=>Math.abs(p[k]-mean[k])))||1);
+    let fy=1;
+    const disp=p=>[(p[0]-mean[0])/span[0]*0.8, fy*(p[1]-mean[1])/span[1]*0.9];
+    geoP=rp.map(disp); geoM=rm.map(disp);
+    if(geoM[0][1]<0){ fy=-1; geoP=rp.map(disp); geoM=rm.map(disp); } // keep action (Mad Max) up top
+  }
+  function drawGeoRec(ui){
+    if(!geoCv) return;
+    const ctx=geoCv.getContext('2d'),W=geoCv.width,H=geoCv.height,pad=46;
+    const cx=W/2, cy=H/2, sc=Math.min(W,H)/2-pad;
+    const X=x=>cx+x*sc, Y=y=>cy-y*sc;
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+    ctx.fillStyle='#6e7681'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('overall enthusiasm →', cx+96, cy+13);
+    ctx.save(); ctx.translate(14,cy); ctx.rotate(-Math.PI/2); ctx.fillText('romance ↔ action', 0, 0); ctx.restore();
+    // pick = the person's highest TRUE predicted rating
+    const pr=P2[ui].map(v=>Math.max(1,Math.min(5,v)));
+    const bi=pr.indexOf(Math.max(...pr));
+    const p=geoP[ui], pl=Math.hypot(p[0],p[1])||1, ph=[p[0]/pl,p[1]/pl];
+    // selected person's taste direction (line through the centre = the average taste)
+    ctx.strokeStyle='#56d36455'; ctx.lineWidth=2; ctx.setLineDash([6,5]);
+    ctx.beginPath();ctx.moveTo(X(-ph[0]),Y(-ph[1]));ctx.lineTo(X(ph[0]),Y(ph[1]));ctx.stroke();
+    ctx.setLineDash([]);
+    // connector: person -> their pick
+    ctx.strokeStyle='#e3b34199'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(X(p[0]),Y(p[1]));ctx.lineTo(X(geoM[bi][0]),Y(geoM[bi][1]));ctx.stroke();
+    geoM.forEach((m,j)=>{
+      const px=X(m[0]),py=Y(m[1]),r=j===bi?7:5;
+      ctx.fillStyle=j===bi?'#e3b341':'#8a6d1f';
+      ctx.beginPath();ctx.moveTo(px,py-r);ctx.lineTo(px+r,py);ctx.lineTo(px,py+r);ctx.lineTo(px-r,py);ctx.closePath();ctx.fill();
+    });
+    geoP.forEach((q,i)=>{
+      const px=X(q[0]),py=Y(q[1]),me=i===ui;
+      ctx.fillStyle=me?'#7ee787':'#2ea043';
+      ctx.beginPath();ctx.arc(px,py,me?6:4,0,6.3);ctx.fill();
+    });
+    // labels, with vertical de-collision — matching tastes land on the same spot
+    const L=[];
+    geoM.forEach((m,j)=>L.push({x:X(m[0]),y:Y(m[1]),t:movies[j]+(j===bi?' 👍':''),c:j===bi?'#e3b341':'#9aa4ae',b:j===bi}));
+    geoP.forEach((q,i)=>L.push({x:X(q[0]),y:Y(q[1]),t:users[i],c:i===ui?'#7ee787':'#9aa4ae',b:i===ui}));
+    L.sort((a,b)=>a.y-b.y);
+    let lastY=-99,lastX=-999;
+    L.forEach(o=>{
+      let ly=o.y;
+      if(Math.abs(o.x-lastX)<82 && ly-lastY<13) ly=lastY+13;
+      lastY=ly; lastX=o.x;
+      ctx.font=(o.b?'bold ':'')+'11px sans-serif'; ctx.textAlign='left'; ctx.fillStyle=o.c;
+      if(ly-o.y>2){ ctx.strokeStyle=o.c+'66'; ctx.lineWidth=.6; ctx.beginPath();ctx.moveTo(o.x+5,o.y);ctx.lineTo(o.x+8,ly-3);ctx.stroke(); }
+      ctx.fillText(o.t,o.x+9,ly+3);
+    });
+    const cap=document.getElementById('rec-geo-cap');
+    if(cap) cap.innerHTML=`<b class="vc">${users[ui]}</b> sits in the <b>${geoP[ui][1]>=0?'action':'romance'}</b> cluster — so the nearest movie that way, <b class="sc">${movies[bi]}</b>, is the pick (gold line). Movies across the map are the worst matches.`;
+  }
+
+  const sel=document.getElementById('rec-user');
+  if(sel){
+    sel.innerHTML=users.map((u,i)=>`<option value="${i}">${u}</option>`).join('');
+    function drawRec(){
+      const u=+sel.value;
+      const pred=P2[u].map(v=>Math.max(1,Math.min(5,v)));
+      const maxi=pred.indexOf(Math.max(...pred));
+      document.getElementById('rec-bars').innerHTML=pred.map((v,i)=>
+        `<div style="display:flex;align-items:center;gap:10px;margin:5px 0">`+
+          `<span style="width:96px;font-size:13px;color:${i===maxi?'var(--v)':'var(--muted)'}">${movies[i]}</span>`+
+          `<span style="flex:1;background:#0a0e14;border-radius:5px;height:18px;position:relative;overflow:hidden">`+
+            `<span style="position:absolute;left:0;top:0;bottom:0;width:${v/5*100}%;background:${i===maxi?'var(--v)':'var(--sigma)'}"></span></span>`+
+          `<span style="width:70px;font-size:13px">${v.toFixed(1)}/5 ${i===maxi?'👍':''}</span>`+
+        `</div>`).join('');
+      document.getElementById('rec-out').innerHTML=
+        `Top pick for <b class="vc">${users[u]}</b>: <b>${movies[maxi]}</b> — predicted <b>${pred[maxi].toFixed(1)}/5</b> from just 2 patterns.<br>`+
+        `<span style="color:var(--muted)">Sanity check vs the real table: model says ${pred[maxi].toFixed(1)}, actual was ${R[u][maxi]}. The 2 patterns reconstruct true ratings — so for a movie left <b>blank</b>, that same prediction becomes the recommendation.</span>`;
+      drawGeoRec(u);
+    }
+    sel.onchange=drawRec; drawRec();
+  }
+})();
+
+// ===================================================================
+// TAB 1 — animated A·x multiply (highlight cells)
+// ===================================================================
+(function(){
+  const stage=document.getElementById('mul-stage');
+  const C=(v,id)=>`<span id="${id}">${v}</span>`;
+  stage.innerHTML =
+    `<span class="mtx" style="grid-template-columns:repeat(2,1.6em)">${C(2,'a00')+C(1,'a01')+C(1,'a10')+C(2,'a11')}</span>`+
+    `<span class="mulop">·</span>`+
+    `<span class="mtx" style="grid-template-columns:1.6em">${C(3,'x0')+C(1,'x1')}</span>`+
+    `<span class="mulop">=</span>`+
+    `<span class="mtx" style="grid-template-columns:1.9em">${C('?','b0')+C('?','b1')}</span>`;
+  const E=id=>document.getElementById(id);
+  const all=['a00','a01','a10','a11','x0','x1'];
+  const clr=()=>all.forEach(i=>E(i).classList.remove('hot'));
+  const exp=E('mul-expr');
+  const steps=[
+    ()=>{clr();E('a00').classList.add('hot');E('x0').classList.add('hot');
+      exp.innerHTML=`<b class="vc">Row 1</b> · x:  <b class="sc">2·3</b> = 6 …`;},
+    ()=>{clr();E('a01').classList.add('hot');E('x1').classList.add('hot');
+      exp.innerHTML=`<b class="vc">Row 1</b> · x:  2·3 + <b class="sc">1·1</b> = 7`;},
+    ()=>{clr();E('b0').textContent='7';E('b0').style.color='#e3b341';
+      exp.innerHTML=`first output  b₀ = <b class="sc">7</b>.  Now row 2 ↓`;},
+    ()=>{clr();E('a10').classList.add('hot');E('x0').classList.add('hot');
+      exp.innerHTML=`<b class="vc">Row 2</b> · x:  <b class="sc">1·3</b> = 3 …`;},
+    ()=>{clr();E('a11').classList.add('hot');E('x1').classList.add('hot');
+      exp.innerHTML=`<b class="vc">Row 2</b> · x:  1·3 + <b class="sc">2·1</b> = 5`;},
+    ()=>{clr();E('b1').textContent='5';E('b1').style.color='#e3b341';
+      exp.innerHTML=`done →  A·x = (<b class="sc">7</b>, <b class="sc">5</b>).  Each output = one row dotted with x.`;},
+  ];
+  let i=0,timer=null;
+  function reset(){clr();E('b0').textContent='?';E('b1').textContent='?';
+    E('b0').style.color='';E('b1').style.color='';exp.innerHTML='Press play to walk through it.';i=0;}
+  E('mul-play').onclick=()=>{clearInterval(timer);reset();
+    timer=setInterval(()=>{if(i>=steps.length){clearInterval(timer);return;}steps[i++]();},1000);};
+  reset();
+})();
+
+// ===================================================================
+// TAB 5 — Fourier epicycle animation (square wave)
+// ===================================================================
+(function(){
+  const cv=document.getElementById('fourier'); if(!cv) return;
+  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+  const cx=150, cy=H/2, amp=48;        // base scale; square-wave term n has radius amp*(4/π)/n
+  const waveX0=320;
+  let phase=0, raf=null;
+  const hist=[];
+  const slider=document.getElementById('fr-k'), label=document.getElementById('fr-k-label');
+  function frame(){
+    const K=+slider.value; label.textContent=K;
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();        // midline
+    ctx.beginPath(); ctx.moveTo(waveX0,0); ctx.lineTo(waveX0,H); ctx.stroke(); // divider
+    // epicycle chain
+    let x=cx, y=cy;
+    for(let n=1;n<=K;n+=2){
+      const r=amp*(4/Math.PI)/n, px=x, py=y;
+      ctx.strokeStyle='#30363d'; ctx.beginPath(); ctx.arc(px,py,r,0,6.2832); ctx.stroke();
+      x += r*Math.cos(n*phase);
+      y += r*Math.sin(n*phase);
+      ctx.strokeStyle='#58a6ff'; ctx.globalAlpha=.6; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y); ctx.stroke(); ctx.globalAlpha=1;
+    }
+    ctx.fillStyle='#f778ba'; ctx.beginPath(); ctx.arc(x,y,4,0,6.2832); ctx.fill();
+    hist.unshift(y); if(hist.length>W-waveX0) hist.pop();
+    // connector tip -> wave
+    ctx.strokeStyle='#f778ba'; ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(waveX0,hist[0]); ctx.stroke(); ctx.globalAlpha=1;
+    // scrolling wave trace
+    ctx.strokeStyle='#56d364'; ctx.lineWidth=2; ctx.beginPath();
+    for(let i=0;i<hist.length;i++){ const wx=waveX0+i; i===0?ctx.moveTo(wx,hist[i]):ctx.lineTo(wx,hist[i]); }
+    ctx.stroke();
+    phase+=0.028;
+    raf=requestAnimationFrame(frame);
+  }
+  raf=requestAnimationFrame(frame);
+})();
+
+// ===================================================================
+// ⌘K glossary search palette
+// ===================================================================
+(function(){
+  const modal=document.getElementById('search-modal');
+  const input=document.getElementById('search-input');
+  const list=document.getElementById('search-results');
+  // build index from glossary dt/dd pairs
+  const entries=[];
+  document.querySelectorAll('#gloss dl.gl').forEach(dl=>{
+    const kids=[...dl.children];
+    for(let i=0;i<kids.length;i+=2){
+      const dt=kids[i], dd=kids[i+1];
+      if(dt&&dt.tagName==='DT') entries.push({term:dt.textContent.replace('★','').trim(), def:dd?dd.textContent.trim():'', dt, dd});
+    }
+  });
+  let view=[], sel=0;
+  function render(q){
+    q=q.trim().toLowerCase();
+    view = !q ? entries.slice()
+      : entries.filter(e=> e.term.toLowerCase().includes(q) || e.def.toLowerCase().includes(q));
+    sel=0;
+    if(!view.length){ list.innerHTML='<div class="sr-empty">No matches.</div>'; return; }
+    list.innerHTML=view.map((e,i)=>
+      `<div class="sr ${i===0?'sel':''}" data-i="${i}"><b>${e.term}</b><small>${e.def}</small></div>`).join('');
+    [...list.children].forEach(el=>{ if(el.dataset.i!==undefined) el.onclick=()=>go(+el.dataset.i); });
+  }
+  function highlight(){ [...list.querySelectorAll('.sr')].forEach((el,i)=>el.classList.toggle('sel',i===sel)); }
+  function go(i){
+    const e=view[i]; if(!e) return;
+    close();
+    document.querySelector('.tab[data-tab="gloss"]').click();
+    e.dt.scrollIntoView({behavior:'smooth',block:'center'});
+    e.dt.classList.remove('flash'); if(e.dd) e.dd.classList.remove('flash');
+    void e.dt.offsetWidth; // restart animation
+    e.dt.classList.add('flash'); if(e.dd) e.dd.classList.add('flash');
+  }
+  function open(){ modal.classList.add('open'); input.value=''; render(''); input.focus(); }
+  function close(){ modal.classList.remove('open'); }
+  document.getElementById('search-open').onclick=open;
+  modal.onclick=e=>{ if(e.target===modal) close(); };
+  input.oninput=()=>render(input.value);
+  input.onkeydown=e=>{
+    if(e.key==='ArrowDown'){ sel=Math.min(view.length-1,sel+1); highlight(); e.preventDefault(); }
+    else if(e.key==='ArrowUp'){ sel=Math.max(0,sel-1); highlight(); e.preventDefault(); }
+    else if(e.key==='Enter'){ go(sel); }
+    else if(e.key==='Escape'){ close(); }
+  };
+  window.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); modal.classList.contains('open')?close():open(); }
+    else if(e.key==='Escape'&&modal.classList.contains('open')){ close(); }
+  });
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,17 @@
 
 const KEY = "footsteps.progress.v1";
 let state = load();
-let current = state.last || 0;
+// A `#<n>` hash (1-based lesson number) deep-links a specific chapter and wins
+// over saved progress, so shared / cross-site links (e.g. from svd-explorer)
+// land on the right lesson.
+function lessonFromHash() {
+  const n = parseInt((location.hash || "").replace(/^#/, ""), 10);
+  return Number.isFinite(n) ? n - 1 : NaN;
+}
+let current = (() => {
+  const h = lessonFromHash();
+  return h >= 0 ? h : (state.last || 0);
+})();
 
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY)) || { done: {}, last: 0 }; }
@@ -38,6 +48,9 @@ function renderQuiz(quiz, li) {
 }
 
 function render() {
+  current = Math.max(0, Math.min(current, LESSONS.length - 1));
+  // keep URL shareable/deep-linkable without spamming history
+  if (history.replaceState) history.replaceState(null, "", `#${current + 1}`);
   const l = LESSONS[current];
   const el = document.getElementById("lesson");
   el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade");
@@ -110,7 +123,77 @@ function renderRail() {
 function mountWidget(el) {
   if (el.dataset.widget === "cosine") return cosineWidget(el);
   if (el.dataset.widget === "attention") return attentionWidget(el);
+  if (el.dataset.widget === "attnmatrix") return attnMatrixWidget(el);
   if (el.dataset.widget === "autoregress") return autoregressWidget(el);
+}
+
+// Full self-attention as an N×N heatmap: row = the querying token, column = the
+// token it attends to, cell = softmax weight (each row sums to 1). Affinities are
+// hand-set (illustrative, not a real model) — the point is the *shape*: every
+// token reading every token, and how the causal mask blacks out the future.
+function attnMatrixWidget(el) {
+  const toks = ["I", "sat", "on", "the", "river", "bank"];
+  // pre-softmax logits[query][key]; diagonal self-weight + a few semantic pulls
+  // (subject↔verb, determiner↔noun, river↔bank) so the pattern reads as meaning
+  const logit = [
+    //  I   sat  on  the  riv bank
+    [1.0, 1.2, 0.2, 0.2, 0.2, 0.2], // I → its verb
+    [1.6, 1.0, 0.7, 0.2, 0.2, 0.2], // sat → subject "I"
+    [0.2, 1.0, 1.0, 0.9, 0.2, 0.2], // on → verb/det
+    [0.2, 0.2, 0.7, 1.0, 1.2, 1.2], // the → the nouns
+    [0.2, 0.2, 0.2, 0.8, 1.0, 2.0], // river → bank
+    [0.2, 0.2, 0.2, 0.9, 2.6, 1.0], // bank → river (disambiguate!)
+  ];
+  let causal = true, hover = -1;
+  const N = toks.length, cell = 46, padL = 52, padT = 56;
+
+  function weights(i) {
+    const row = logit[i].map((v, j) => (causal && j > i) ? -Infinity : v);
+    const ex = row.map((v) => Math.exp(v));
+    const s = ex.reduce((a, b) => a + b, 0);
+    return ex.map((v) => v / s);
+  }
+  function lerp(w) { // bg → accent blue by weight
+    const a = [22, 27, 34], b = [110, 168, 254];
+    return `rgb(${a.map((c, k) => Math.round(c + (b[k] - c) * w)).join(",")})`;
+  }
+  function draw() {
+    const W = padL + N * cell + 10, H = padT + N * cell + 64;
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">`;
+    // column labels (keys)
+    toks.forEach((t, j) => {
+      s += `<text x="${padL + j * cell + cell / 2}" y="${padT - 12}" fill="#8b949e" font-size="12" text-anchor="middle">${t}</text>`;
+    });
+    s += `<text x="${padL + N * cell / 2}" y="18" fill="#6e7681" font-size="11" text-anchor="middle">attends to →</text>`;
+    for (let i = 0; i < N; i++) {
+      const w = weights(i);
+      // row label (query)
+      s += `<text x="${padL - 10}" y="${padT + i * cell + cell / 2 + 4}" fill="${i === hover ? "#e6edf3" : "#8b949e"}" font-size="12" text-anchor="end">${toks[i]}</text>`;
+      for (let j = 0; j < N; j++) {
+        const masked = causal && j > i;
+        const fill = masked ? "#0e1117" : lerp(w[j]);
+        const op = i === hover || hover < 0 ? 1 : 0.35;
+        s += `<rect data-i="${i}" x="${padL + j * cell}" y="${padT + i * cell}" width="${cell - 3}" height="${cell - 3}" rx="3" fill="${fill}" opacity="${op}" style="cursor:pointer"/>`;
+        if (!masked && w[j] >= 0.08) s += `<text x="${padL + j * cell + (cell - 3) / 2}" y="${padT + i * cell + (cell - 3) / 2 + 4}" fill="${w[j] > 0.45 ? "#0e1117" : "#c9d4e0"}" font-size="10" text-anchor="middle" pointer-events="none">${w[j].toFixed(2)}</text>`;
+      }
+    }
+    s += `</svg>`;
+    const lead = hover < 0 ? `<span style="color:var(--muted)">hover a row to read where that word looks</span>`
+      : `<b>${toks[hover]}</b> looks at: ` + weights(hover).map((v, j) => ({ t: toks[j], v }))
+        .filter((x) => x.v >= 0.05).sort((a, b) => b.v - a.v)
+        .map((x) => `${x.t} <b style="color:var(--accent)">${x.v.toFixed(2)}</b>`).join(" · ");
+    el.innerHTML =
+      `<div style="margin-bottom:10px">` +
+      `<button class="opt mask ${causal ? "on" : ""}" data-c="1" style="display:inline-block;width:auto;margin:0 6px 0 0">causal mask · GPT</button>` +
+      `<button class="opt mask ${causal ? "" : "on"}" data-c="0" style="display:inline-block;width:auto">full · BERT</button></div>` +
+      s + `<div class="readout" style="margin-top:10px;font-size:14px;min-height:1.4em">${lead}</div>`;
+    el.querySelectorAll("rect[data-i]").forEach((r) =>
+      r.addEventListener("mouseenter", () => { hover = +r.dataset.i; draw(); }));
+    el.querySelector("svg").addEventListener("mouseleave", () => { hover = -1; draw(); });
+    el.querySelectorAll(".mask").forEach((b) =>
+      b.addEventListener("click", () => { causal = b.dataset.c === "1"; draw(); }));
+  }
+  draw();
 }
 
 // Toy autoregressive generator: predict→append→repeat, with canned top-k
