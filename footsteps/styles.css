@@ -71,9 +71,11 @@ body {
 /* ---- stage ---- */
 #stage { display: flex; flex-direction: column; overflow: hidden; }
 #lesson { overflow-y: auto; padding: 56px 6vw; flex: 1; }
-/* hold text to a comfortable reading measure (~70ch) and center it, instead of
-   letting lines run the full width of a wide monitor */
-#lesson > * { max-width: 720px; margin-left: auto; margin-right: auto; }
+/* hold every block to one reading-measure column (~70ch), flush-left. NOT
+   margin:auto centering — p/h3/h2 carry their own `margin: x 0` which beats the
+   `#lesson > *` selector on specificity, so auto here would center only the
+   callouts/tables and leave paragraphs left-aligned (the columns drift apart). */
+#lesson > * { max-width: 720px; margin-left: 0; margin-right: 0; }
 #lesson.fade { animation: fade .35s ease; }
 @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
 
@@ -87,8 +89,10 @@ h2.lt { font-size: 32px; margin: 6px 0 4px; line-height: 1.2; }
 
 /* flat margin-notes, not stacked cards — a quiet left rule carries the color */
 .callout {
-  border-left: 2px solid var(--line); padding: 2px 0 2px 20px; margin: 26px auto;
+  border-left: 2px solid var(--line); padding: 2px 0 2px 20px; margin: 26px 0;
   background: none; border-radius: 0;
+  /* long unbroken tokens (urls, code) must wrap, not push the box past 720px */
+  overflow-wrap: break-word;
 }
 .callout .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
 .callout.desk { border-color: var(--gold); } .callout.desk .tag { color: var(--gold); }
