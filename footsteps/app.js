@@ -438,9 +438,14 @@ function trainvecWidget(el) {
 // nearest real word pops out. king − man + woman → queen, because "gender" and
 // "status" became directions in the space — learned, not programmed.
 function analogyWidget(el) {
-  const emb = {                       // toy 2-D space: x = gender, y = status
-    man: [0.12, 0.18], woman: [0.88, 0.18], king: [0.12, 0.86], queen: [0.88, 0.86],
-    boy: [0.18, 0.34], girl: [0.82, 0.34], uncle: [0.15, 0.55], aunt: [0.85, 0.55],
+  // toy 2-D space: x = gender, y = status. Positions are tuned so the vector
+  // arithmetic actually lands right: the "royalty" offset (king − man) added to
+  // girl reaches princess, to boy reaches prince, to woman reaches queen.
+  const emb = {
+    boy: [0.12, 0.12], girl: [0.88, 0.12],
+    man: [0.12, 0.36], woman: [0.88, 0.36],
+    prince: [0.12, 0.66], princess: [0.88, 0.66],
+    king: [0.12, 0.90], queen: [0.88, 0.90],
   };
   const words = Object.keys(emb);
   let A = "king", B = "man", C = "woman";
