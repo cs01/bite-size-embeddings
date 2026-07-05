@@ -74,9 +74,8 @@ const LESSONS = [
       { p: "Fair challenge — and a sharp one. LSA's <em>counted</em> vectors already placed <code>cat</code> near <code>dog</code>. The leap is <strong>not</strong> the grouping. It's <strong>where the vector comes from.</strong>" },
       { p: "LSA <em>counts</em> a giant table once and factorizes it — a fixed, one-shot measurement. The new approach makes each vector a set of <strong>adjustable knobs</strong> that a neural network <em>tunes by trial and error</em> (gradient descent) to get better at a task. Same <code>cat≈dog</code> result; a completely different <em>kind of object</em>." },
       { widget: "trainvec" },
-      { leap: "Why that reframing is everything: a counted table is a dead artifact — a map drawn from a survey, finished. A <em>learned</em> vector is a <strong>living building block</strong> you can stack inside a bigger network and keep training. Embeddings stop being preprocessing and become the <strong>first layer of a trainable model</strong>. A counted table could never be 'layer 1 of a deep net'; a learned vector could. <em>That</em> is the road to BERT and GPT." },
-      { aside: "The analogy: counting <strong>surveys the city and hands you a finished map</strong>. Learning <strong>gives a robot a goal and lets it draw — and redraw — its own map</strong>, tuned for the task. And you can bolt more robots on top." },
-      { aside: "Notice there's no human labeling anywhere — the text quizzes itself by hiding its own next word. Training like this is called <strong>self-supervised</strong>, and it's the template for the next 20 years: <em>pick a self-supervised prediction task, and useful representations fall out as a byproduct.</em> word2vec, BERT, GPT — all variations on this." },
+      { leap: "That reframing changes everything. A counted table is a dead artifact — a map drawn from a survey, finished. A <em>learned</em> vector is a <strong>living building block</strong> you can stack inside a bigger network and keep training. Embeddings stop being preprocessing and become the <strong>first layer of a trainable model</strong>. A counted table could never be 'layer 1 of a deep net'; a learned vector could. <em>That</em> is the road to BERT and GPT." },
+      { aside: "No human labels anything here — the text quizzes itself by hiding its own next word. Training like this is called <strong>self-supervised</strong>, and it becomes the template for the next twenty years: <em>pick a self-supervised prediction task, and useful representations fall out as a byproduct.</em> word2vec, BERT, GPT — all variations on this." },
       { legacy: "This work fused the two threads: distributional meaning (the 'company a word keeps') + neural learning. But it was slow and heavy for 2003 hardware. The world needed someone to make it cheap." },
     ],
     quiz: [
@@ -142,7 +141,7 @@ const LESSONS = [
       { eq: "context = Σ  αᵢ · (source word i)\n        where  αᵢ = how much to attend to word i, and Σαᵢ = 1" },
       { leap: "Those weights <code>αᵢ</code> are <strong>attention</strong>. To translate 'bank' the decoder learns to put weight on the source words that disambiguate it. The model learns <em>where to look</em> — a soft, differentiable, learned alignment. The bottleneck is gone." },
       { widget: "attention" },
-      { aside: "Notice: this is the <em>exact</em> 'read your neighbors and weight them' operation the embedding problem was begging for in the last chapter. Two fields, one mechanism — they just didn't know it yet." },
+      { aside: "This is the <em>exact</em> 'read your neighbors and weight them' operation the embedding problem was begging for in the last chapter. Two fields, one mechanism — they just didn't know it yet." },
       { legacy: "Attention spread fast as an <em>add-on</em> to RNNs. For three years the recipe was 'RNN + attention.' Everyone assumed you still needed the RNN to handle sequence. Everyone was wrong." },
     ],
     quiz: [
