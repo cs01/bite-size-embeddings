@@ -66,8 +66,18 @@ function renderBody(body) {
 function renderQuiz(quiz, li) {
   if (!quiz || !quiz.length) return "";
   const items = quiz.map((q, qi) => {
-    const opts = q.options.map((o, oi) =>
-      `<button class="opt" data-li="${li}" data-qi="${qi}" data-oi="${oi}">${o}</button>`).join("");
+    // display options in a seeded-shuffled order (stable across visits) so the
+    // correct answer isn't always in the same slot; data-oi keeps the original
+    // index, so scoring is unaffected
+    const order = q.options.map((_, oi) => oi);
+    let seed = li * 2654435761 + qi * 40503 + 1;
+    for (let i = order.length - 1; i > 0; i--) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const j = seed % (i + 1);
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    const opts = order.map((oi) =>
+      `<button class="opt" data-li="${li}" data-qi="${qi}" data-oi="${oi}">${q.options[oi]}</button>`).join("");
     return `<div class="q">${q.q}</div>${opts}<div class="explain" id="ex-${li}-${qi}"></div>`;
   }).join("");
   return `<div class="quiz-sep"><span>✦ Check yourself</span></div><div class="quiz">${items}</div>`;
@@ -188,7 +198,7 @@ function attnMatrixWidget(el) {
     return ex.map((v) => v / s);
   }
   function lerp(w) { // bg → accent blue by weight
-    const a = [22, 27, 34], b = [110, 168, 254];
+    const a = [237, 240, 243], b = [37, 99, 235];
     return `rgb(${a.map((c, k) => Math.round(c + (b[k] - c) * w)).join(",")})`;
   }
   function draw() {
@@ -196,19 +206,19 @@ function attnMatrixWidget(el) {
     let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">`;
     // column labels (keys)
     toks.forEach((t, j) => {
-      s += `<text x="${padL + j * cell + cell / 2}" y="${padT - 12}" fill="#8b949e" font-size="12" text-anchor="middle">${t}</text>`;
+      s += `<text x="${padL + j * cell + cell / 2}" y="${padT - 12}" fill="#6b7280" font-size="12" text-anchor="middle">${t}</text>`;
     });
-    s += `<text x="${padL + N * cell / 2}" y="18" fill="#6e7681" font-size="11" text-anchor="middle">attends to →</text>`;
+    s += `<text x="${padL + N * cell / 2}" y="18" fill="#9ca3af" font-size="11" text-anchor="middle">attends to →</text>`;
     for (let i = 0; i < N; i++) {
       const w = weights(i);
       // row label (query)
-      s += `<text x="${padL - 10}" y="${padT + i * cell + cell / 2 + 4}" fill="${i === hover ? "#e6edf3" : "#8b949e"}" font-size="12" text-anchor="end">${toks[i]}</text>`;
+      s += `<text x="${padL - 10}" y="${padT + i * cell + cell / 2 + 4}" fill="${i === hover ? "#1f2937" : "#6b7280"}" font-size="12" text-anchor="end">${toks[i]}</text>`;
       for (let j = 0; j < N; j++) {
         const masked = causal && j > i;
-        const fill = masked ? "#0e1117" : lerp(w[j]);
+        const fill = masked ? "#f1f2f0" : lerp(w[j]);
         const op = i === hover || hover < 0 ? 1 : 0.35;
         s += `<rect data-i="${i}" x="${padL + j * cell}" y="${padT + i * cell}" width="${cell - 3}" height="${cell - 3}" rx="3" fill="${fill}" opacity="${op}" style="cursor:pointer"/>`;
-        if (!masked && w[j] >= 0.08) s += `<text x="${padL + j * cell + (cell - 3) / 2}" y="${padT + i * cell + (cell - 3) / 2 + 4}" fill="${w[j] > 0.45 ? "#0e1117" : "#c9d4e0"}" font-size="10" text-anchor="middle" pointer-events="none">${w[j].toFixed(2)}</text>`;
+        if (!masked && w[j] >= 0.08) s += `<text x="${padL + j * cell + (cell - 3) / 2}" y="${padT + i * cell + (cell - 3) / 2 + 4}" fill="${w[j] > 0.45 ? "#ffffff" : "#374151"}" font-size="10" text-anchor="middle" pointer-events="none">${w[j].toFixed(2)}</text>`;
       }
     }
     s += `</svg>`;
@@ -286,8 +296,8 @@ function cosineWidget(el) {
       `<circle cx="${cx + v[0] * R}" cy="${cy + v[1] * R}" r="5" fill="${color}"/>` +
       `<text x="${cx + v[0] * (R + 16)}" y="${cy + v[1] * (R + 16)}" fill="${color}" font-size="13" text-anchor="middle">${lbl}</text>`;
     svg.innerHTML =
-      `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#2b3441"/>` +
-      arrow(va, "#6ea8fe", "A") + arrow(vb, "#b692ff", "B");
+      `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#d1d5db"/>` +
+      arrow(va, "#2563eb", "A") + arrow(vb, "#7c3aed", "B");
     el.querySelector("#cos").textContent = cos.toFixed(3);
     el.querySelector("#deg").textContent = deg;
   }
@@ -300,15 +310,22 @@ function cosineWidget(el) {
 // is the *shape* of attention: one token weighting all others.
 function attentionWidget(el) {
   const toks = ["I", "sat", "on", "the", "river", "bank"];
-  // affinity of "bank"(query) toward each token — high on river/the
-  const affin = { I: 0.1, sat: 0.3, on: 0.2, the: 0.6, river: 2.4, bank: 0.5 };
+  // per-QUERY affinity rows — the whole point is that the distribution changes
+  // with the query ("sat" looks at its subject, "bank" looks at "river")
+  const affin = {
+    I:     { I: 1.0, sat: 1.2, on: 0.2, the: 0.2, river: 0.2, bank: 0.2 },
+    sat:   { I: 1.6, sat: 1.0, on: 0.7, the: 0.2, river: 0.2, bank: 0.2 },
+    on:    { I: 0.2, sat: 1.0, on: 1.0, the: 0.9, river: 0.2, bank: 0.2 },
+    the:   { I: 0.2, sat: 0.2, on: 0.7, the: 1.0, river: 1.2, bank: 1.2 },
+    river: { I: 0.2, sat: 0.2, on: 0.2, the: 0.8, river: 1.0, bank: 2.0 },
+    bank:  { I: 0.2, sat: 0.2, on: 0.2, the: 0.9, river: 2.6, bank: 1.0 },
+  };
   el.innerHTML = `<div class="readout">Query word: <b id="qword">bank</b> — how much it attends to each token (softmax):</div><svg width="360" height="120"></svg>
     <div style="font-size:12px;color:var(--muted)">Click a token to make it the query.</div>`;
   const svg = el.querySelector("svg");
   function draw(query) {
     el.querySelector("#qword").textContent = query;
-    // crude affinity model: each token's pull toward the query
-    const base = toks.map((t) => (t === query ? 1.0 : (affin[t] || 0.3)));
+    const base = toks.map((t) => affin[query][t]);
     const ex = base.map((x) => Math.exp(x));
     const sum = ex.reduce((s, x) => s + x, 0);
     const w = ex.map((x) => x / sum);
@@ -316,9 +333,9 @@ function attentionWidget(el) {
     svg.innerHTML = toks.map((t, i) => {
       const h = 8 + w[i] * 80, x = 10 + i * (bw + gap);
       const isq = t === query;
-      return `<rect class="atok" data-t="${t}" x="${x}" y="${100 - h}" width="${bw}" height="${h}" rx="4" fill="${isq ? "#e3b341" : "#6ea8fe"}" opacity="${0.35 + w[i]}" style="cursor:pointer"/>` +
-        `<text x="${x + bw / 2}" y="114" fill="#8b949e" font-size="12" text-anchor="middle">${t}</text>` +
-        `<text x="${x + bw / 2}" y="${96 - h}" fill="#e6edf3" font-size="11" text-anchor="middle">${w[i].toFixed(2)}</text>`;
+      return `<rect class="atok" data-t="${t}" x="${x}" y="${100 - h}" width="${bw}" height="${h}" rx="4" fill="${isq ? "#b45309" : "#2563eb"}" opacity="${0.35 + w[i]}" style="cursor:pointer"/>` +
+        `<text x="${x + bw / 2}" y="114" fill="#6b7280" font-size="12" text-anchor="middle">${t}</text>` +
+        `<text x="${x + bw / 2}" y="${96 - h}" fill="#1f2937" font-size="11" text-anchor="middle">${w[i].toFixed(2)}</text>`;
     }).join("");
     svg.querySelectorAll(".atok").forEach((r) => r.addEventListener("click", () => draw(r.dataset.t)));
   }
@@ -346,25 +363,25 @@ function distribWidget(el) {
       `<button class="opt ${w === sel ? "on" : ""}" data-w="${w}" style="display:inline-block;width:auto;margin:0 6px 0 0">${w}</button>`).join("");
     const chips = pool.map((c) => {
       const on = mine.includes(c);
-      return `<span style="display:inline-block;margin:3px;padding:3px 9px;border-radius:6px;font-size:13px;border:1px solid ${on ? "#6ea8fe" : "#262d39"};background:${on ? "rgba(110,168,254,.16)" : "transparent"};color:${on ? "#e6edf3" : "#566069"}">${c}</span>`;
+      return `<span style="display:inline-block;margin:3px;padding:3px 9px;border-radius:6px;font-size:13px;border:1px solid ${on ? "#2563eb" : "#e5e7eb"};background:${on ? "rgba(37,99,235,.10)" : "transparent"};color:${on ? "#1f2937" : "#9ca3af"}">${c}</span>`;
     }).join("");
     const bars = words.filter((w) => w !== sel).map((w) => {
       const sh = shared(sel, w), n = sh.length, max = Math.max(mine.length, company[w].length);
       return `<div style="display:flex;align-items:center;gap:10px;margin:7px 0">
-        <span style="width:62px;color:#8b949e;font-family:ui-monospace,monospace;font-size:13px">${sel} ↔ ${w}</span>
-        <div style="flex:1;background:#0e1117;border-radius:4px;height:16px;overflow:hidden"><div style="width:${(n / max) * 100}%;height:100%;background:${n ? "#3fb950" : "#2b3441"};transition:.2s"></div></div>
-        <span style="flex:none;width:170px;text-align:right;color:#c9d4e0;font-size:12px">${n ? n + " shared · " + sh.join(", ") : "nothing in common"}</span></div>`;
+        <span style="width:62px;color:#6b7280;font-family:ui-monospace,monospace;font-size:13px">${sel} ↔ ${w}</span>
+        <div style="flex:1;background:#e5e7eb;border-radius:4px;height:16px;overflow:hidden"><div style="width:${(n / max) * 100}%;height:100%;background:${n ? "#15803d" : "#d1d5db"};transition:.2s"></div></div>
+        <span style="flex:none;width:170px;text-align:right;color:#374151;font-size:12px">${n ? n + " shared · " + sh.join(", ") : "nothing in common"}</span></div>`;
     }).join("");
     const sims = words.filter((x) => x !== sel).map((x) => ({ x, n: shared(sel, x).length })).sort((a, b) => b.n - a.n);
     const readout = sims[0].n === 0
       ? `<b>${sel}</b> keeps company nobody else does → it stands alone.`
       : `<b>${sel}</b> keeps almost the same company as <b style="color:var(--accent)">${sims[0].x}</b> → the machine calls them <b>similar</b>, without knowing what either <em>means</em>.`;
     el.innerHTML =
-      `<div style="font-size:13px;color:#8b949e;margin-bottom:10px">Pick a word. Highlighted below is <b style="color:#c9d4e0">the company it keeps</b> — the words seen near it. A machine sees only this, never a definition.</div>` +
+      `<div style="font-size:13px;color:#6b7280;margin-bottom:10px">Pick a word. Highlighted below is <b style="color:#374151">the company it keeps</b> — the words seen near it. A machine sees only this, never a definition.</div>` +
       tabs +
-      `<div style="margin:14px 0 4px;font-size:11px;color:#6e7681;text-transform:uppercase;letter-spacing:1px">company of “${sel}”</div>` +
+      `<div style="margin:14px 0 4px;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">company of “${sel}”</div>` +
       `<div>${chips}</div>` +
-      `<div style="font-size:13px;color:#8b949e;margin:16px 0 2px">company shared with the other words:</div>` +
+      `<div style="font-size:13px;color:#6b7280;margin:16px 0 2px">company shared with the other words:</div>` +
       bars +
       `<div class="readout" style="margin-top:10px">${readout}</div>`;
     el.querySelectorAll(".opt[data-w]").forEach((b) => b.onclick = () => { sel = b.dataset.w; draw(); });
@@ -390,7 +407,7 @@ function trainvecWidget(el) {
     draw();
   }
   function cellColor(v) {                            // blue for +, violet for −, brighter = bigger
-    const m = Math.min(1, Math.abs(v)), c = v >= 0 ? [110, 168, 254] : [182, 146, 255];
+    const m = Math.min(1, Math.abs(v)), c = v >= 0 ? [37, 99, 235] : [124, 58, 237];
     return `rgba(${c[0]},${c[1]},${c[2]},${(0.16 + m * 0.7).toFixed(2)})`;
   }
   function draw() {
@@ -400,24 +417,24 @@ function trainvecWidget(el) {
     const hy = [74, 120, 166, 212], oy = [74, 120, 166, 212];
     let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">`;
     for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++)            // embedding → hidden
-      s += `<line x1="${ex + ew}" y1="${ecy(i)}" x2="${hx}" y2="${hy[j]}" stroke="#6ea8fe" stroke-width="1" opacity="${(0.05 + p * 0.13).toFixed(2)}"/>`;
+      s += `<line x1="${ex + ew}" y1="${ecy(i)}" x2="${hx}" y2="${hy[j]}" stroke="#2563eb" stroke-width="1" opacity="${(0.05 + p * 0.13).toFixed(2)}"/>`;
     for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++)            // hidden → output
-      s += `<line x1="${hx}" y1="${hy[j]}" x2="${ox}" y2="${oy[k]}" stroke="#b692ff" stroke-width="1" opacity="${(0.05 + p * 0.13).toFixed(2)}"/>`;
-    s += `<rect x="6" y="${ecy(2) - 21}" width="56" height="42" rx="8" fill="#1c2330" stroke="#2b3441"/><text x="34" y="${ecy(2) + 1}" fill="#e6edf3" font-size="14" text-anchor="middle">dog</text><text x="34" y="${ecy(2) + 16}" fill="#6e7681" font-size="9" text-anchor="middle">token</text>`;
-    s += `<text x="${ex + ew / 2}" y="34" fill="#8b949e" font-size="10" text-anchor="middle">embedding · 5 knobs</text>`;
+      s += `<line x1="${hx}" y1="${hy[j]}" x2="${ox}" y2="${oy[k]}" stroke="#7c3aed" stroke-width="1" opacity="${(0.05 + p * 0.13).toFixed(2)}"/>`;
+    s += `<rect x="6" y="${ecy(2) - 21}" width="56" height="42" rx="8" fill="#f3f4f6" stroke="#d1d5db"/><text x="34" y="${ecy(2) + 1}" fill="#1f2937" font-size="14" text-anchor="middle">dog</text><text x="34" y="${ecy(2) + 16}" fill="#9ca3af" font-size="9" text-anchor="middle">token</text>`;
+    s += `<text x="${ex + ew / 2}" y="34" fill="#6b7280" font-size="10" text-anchor="middle">embedding · 5 knobs</text>`;
     for (let i = 0; i < 5; i++) {
-      s += `<rect x="${ex}" y="${ey0 + i * (eh + eg)}" width="${ew}" height="${eh}" rx="5" fill="${cellColor(vec[i])}" stroke="#2b3441"/>`;
-      s += `<text x="${ex + ew / 2}" y="${ecy(i) + 4}" fill="#e6edf3" font-size="12" font-family="${MONO}" text-anchor="middle">${vec[i].toFixed(2)}</text>`;
+      s += `<rect x="${ex}" y="${ey0 + i * (eh + eg)}" width="${ew}" height="${eh}" rx="5" fill="${cellColor(vec[i])}" stroke="#d1d5db"/>`;
+      s += `<text x="${ex + ew / 2}" y="${ecy(i) + 4}" fill="#1f2937" font-size="12" font-family="${MONO}" text-anchor="middle">${vec[i].toFixed(2)}</text>`;
     }
-    s += `<text x="${hx}" y="34" fill="#8b949e" font-size="10" text-anchor="middle">hidden</text>`;
-    for (let j = 0; j < 4; j++) s += `<circle cx="${hx}" cy="${hy[j]}" r="9" fill="#161b22" stroke="#6ea8fe" stroke-opacity="${(0.4 + p * 0.6).toFixed(2)}"/>`;
-    s += `<text x="${ox + 56}" y="34" fill="#8b949e" font-size="10" text-anchor="middle">predicts neighbour</text>`;
+    s += `<text x="${hx}" y="34" fill="#6b7280" font-size="10" text-anchor="middle">hidden</text>`;
+    for (let j = 0; j < 4; j++) s += `<circle cx="${hx}" cy="${hy[j]}" r="9" fill="#ffffff" stroke="#2563eb" stroke-opacity="${(0.4 + p * 0.6).toFixed(2)}"/>`;
+    s += `<text x="${ox + 56}" y="34" fill="#6b7280" font-size="10" text-anchor="middle">predicts neighbour</text>`;
     outs.forEach((o, k) => {
       const prob = (1 - p) * 0.25 + p * o[1];
-      s += `<text x="${ox - 6}" y="${oy[k] + 4}" fill="#c9d4e0" font-size="11" text-anchor="end">${o[0]}</text>`;
-      s += `<rect x="${ox + 2}" y="${oy[k] - 7}" width="96" height="14" rx="3" fill="#0e1117"/>`;
-      s += `<rect x="${ox + 2}" y="${oy[k] - 7}" width="${(96 * prob).toFixed(1)}" height="14" rx="3" fill="${k < 3 ? "#3fb950" : "#2b3441"}"/>`;
-      s += `<text x="${ox + 104}" y="${oy[k] + 4}" fill="#8b949e" font-size="10" font-family="${MONO}">${Math.round(prob * 100)}%</text>`;
+      s += `<text x="${ox - 6}" y="${oy[k] + 4}" fill="#374151" font-size="11" text-anchor="end">${o[0]}</text>`;
+      s += `<rect x="${ox + 2}" y="${oy[k] - 7}" width="96" height="14" rx="3" fill="#e5e7eb"/>`;
+      s += `<rect x="${ox + 2}" y="${oy[k] - 7}" width="${(96 * prob).toFixed(1)}" height="14" rx="3" fill="${k < 3 ? "#15803d" : "#d1d5db"}"/>`;
+      s += `<text x="${ox + 104}" y="${oy[k] + 4}" fill="#6b7280" font-size="10" font-family="${MONO}">${Math.round(prob * 100)}%</text>`;
     });
     s += `</svg>`;
     el.innerHTML = s +
@@ -426,7 +443,7 @@ function trainvecWidget(el) {
         <button class="opt" id="s1" style="display:inline-block;width:auto">▶ train 1 step</button>
         <button class="opt" id="s10" style="display:inline-block;width:auto">⏩ train 10×</button>
         <button class="opt" id="sr" style="display:inline-block;width:auto">↺ reset</button></div>
-       <div style="font-size:12px;color:#8b949e;margin-top:8px">Those 5 numbers <em>are</em> the word's vector — knobs the net turns. Each step nudges them so it predicts <code>dog</code>'s real neighbours better, and the loss falls. Counting sets the numbers once; learning keeps tuning them.</div>`;
+       <div style="font-size:12px;color:#6b7280;margin-top:8px">Those 5 numbers <em>are</em> the word's vector — knobs the net turns. Each step nudges them so it predicts <code>dog</code>'s real neighbours better, and the loss falls. Counting sets the numbers once; learning keeps tuning them.</div>`;
     el.querySelector("#s1").onclick = () => step(1);
     el.querySelector("#s10").onclick = () => step(10);
     el.querySelector("#sr").onclick = () => { vec = start.slice(); steps = 0; draw(); };
@@ -460,16 +477,16 @@ function analogyWidget(el) {
     const t = [emb[A][0] - emb[B][0] + emb[C][0], emb[A][1] - emb[B][1] + emb[C][1]];
     const ans = nearest(t, [A, B, C]);
     const dot = (w, col) => `<circle cx="${X(emb[w][0])}" cy="${Y(emb[w][1])}" r="5" fill="${col}"/><text x="${X(emb[w][0]) + 8}" y="${Y(emb[w][1]) + 4}" fill="${col}" font-size="12">${w}</text>`;
-    let pts = words.map((w) => dot(w, [A, B, C].includes(w) ? "#e3b341" : "#3a4452")).join("");
-    pts += `<circle cx="${X(t[0])}" cy="${Y(t[1])}" r="8" fill="none" stroke="#6ea8fe" stroke-width="2"/><text x="${X(t[0]) + 11}" y="${Y(t[1]) - 9}" fill="#6ea8fe" font-size="12">result</text>`;
+    let pts = words.map((w) => dot(w, [A, B, C].includes(w) ? "#b45309" : "#9ca3af")).join("");
+    pts += `<circle cx="${X(t[0])}" cy="${Y(t[1])}" r="8" fill="none" stroke="#2563eb" stroke-width="2"/><text x="${X(t[0]) + 11}" y="${Y(t[1]) - 9}" fill="#2563eb" font-size="12">result</text>`;
     const sel = (id, val) => `<select id="${id}" class="wsel">${words.map((w) => `<option ${w === val ? "selected" : ""}>${w}</option>`).join("")}</select>`;
     el.innerHTML =
       `<div class="readout" style="margin-bottom:8px">${sel("aA", A)} − ${sel("aB", B)} + ${sel("aC", C)} = <b>${ans}</b></div>
        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">
-         <text x="${W / 2}" y="${H - 6}" fill="#6e7681" font-size="11" text-anchor="middle">← male · gender · female →</text>
-         <text x="13" y="${H / 2}" fill="#6e7681" font-size="11" transform="rotate(-90 13 ${H / 2})" text-anchor="middle">status →</text>${pts}
+         <text x="${W / 2}" y="${H - 6}" fill="#9ca3af" font-size="11" text-anchor="middle">← male · gender · female →</text>
+         <text x="13" y="${H / 2}" fill="#9ca3af" font-size="11" transform="rotate(-90 13 ${H / 2})" text-anchor="middle">status →</text>${pts}
        </svg>
-       <div style="font-size:12px;color:#8b949e;margin-top:6px">Nobody drew these axes — "gender" and "status" <em>emerged</em> as directions, just from predicting word neighbours.</div>`;
+       <div style="font-size:12px;color:#6b7280;margin-top:6px">Nobody drew these axes — "gender" and "status" <em>emerged</em> as directions, just from predicting word neighbours.</div>`;
     el.querySelector("#aA").onchange = (e) => { A = e.target.value; draw(); };
     el.querySelector("#aB").onchange = (e) => { B = e.target.value; draw(); };
     el.querySelector("#aC").onchange = (e) => { C = e.target.value; draw(); };
@@ -492,17 +509,17 @@ function polysemyWidget(el) {
         <button class="opt ${ctx === "river" ? "on" : ""}" data-c="river" style="display:inline-block;width:auto">"…the river <b>bank</b>"</button>
         <button class="opt ${ctx === "money" ? "on" : ""}" data-c="money" style="display:inline-block;width:auto">"…the cash <b>bank</b>"</button></div>
       <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">
-        <circle cx="${river.x}" cy="${river.y}" r="36" fill="rgba(63,185,80,.10)" stroke="#3fb950" stroke-dasharray="3 3"/>
-        <text x="${river.x}" y="${river.y + 4}" fill="#3fb950" font-size="11" text-anchor="middle">river</text>
-        <circle cx="${money.x}" cy="${money.y}" r="36" fill="rgba(227,179,65,.10)" stroke="#e3b341" stroke-dasharray="3 3"/>
-        <text x="${money.x}" y="${money.y + 4}" fill="#e3b341" font-size="11" text-anchor="middle">money</text>
-        <line x1="${stuck.x}" y1="${stuck.y}" x2="${want.x}" y2="${want.y}" stroke="#f85149" stroke-dasharray="2 3" opacity=".45"/>
-        <circle cx="${want.x}" cy="${want.y}" r="9" fill="none" stroke="#6ea8fe" stroke-width="2" stroke-dasharray="3 3"/>
-        <text x="${want.x}" y="${want.y - 15}" fill="#6ea8fe" font-size="10" text-anchor="middle">where it should be</text>
-        <circle cx="${stuck.x}" cy="${stuck.y}" r="8" fill="#f85149"/>
-        <text x="${stuck.x}" y="${stuck.y + 22}" fill="#f85149" font-size="11" text-anchor="middle">static "bank" — stuck</text>
+        <circle cx="${river.x}" cy="${river.y}" r="36" fill="rgba(21,128,61,.08)" stroke="#15803d" stroke-dasharray="3 3"/>
+        <text x="${river.x}" y="${river.y + 4}" fill="#15803d" font-size="11" text-anchor="middle">river</text>
+        <circle cx="${money.x}" cy="${money.y}" r="36" fill="rgba(180,83,9,.08)" stroke="#b45309" stroke-dasharray="3 3"/>
+        <text x="${money.x}" y="${money.y + 4}" fill="#b45309" font-size="11" text-anchor="middle">money</text>
+        <line x1="${stuck.x}" y1="${stuck.y}" x2="${want.x}" y2="${want.y}" stroke="#dc2626" stroke-dasharray="2 3" opacity=".45"/>
+        <circle cx="${want.x}" cy="${want.y}" r="9" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="3 3"/>
+        <text x="${want.x}" y="${want.y - 15}" fill="#2563eb" font-size="10" text-anchor="middle">where it should be</text>
+        <circle cx="${stuck.x}" cy="${stuck.y}" r="8" fill="#dc2626"/>
+        <text x="${stuck.x}" y="${stuck.y + 22}" fill="#dc2626" font-size="11" text-anchor="middle">static "bank" — stuck</text>
       </svg>
-      <div style="font-size:12px;color:#8b949e;margin-top:6px">Switch the sentence: the blue target jumps, but the red static vector <b>can't move</b>. One word, one vector, blind to context — the flaw the next chapters fix.</div>`;
+      <div style="font-size:12px;color:#6b7280;margin-top:6px">Switch the sentence: the blue target jumps, but the red static vector <b>can't move</b>. One word, one vector, blind to context — the flaw the next chapters fix.</div>`;
     el.querySelectorAll(".opt[data-c]").forEach((b) => b.onclick = () => { ctx = b.dataset.c; draw(); });
   }
   draw();
@@ -521,14 +538,14 @@ function maskfillWidget(el) {
     const rt = bidir ? right : `<span style="opacity:.22">${right}</span>`;
     const bars = c.map(([w, p]) =>
       `<div style="display:flex;align-items:center;gap:10px;margin:5px 0">
-        <span style="width:54px;color:#c9d4e0;font-family:var(--mono)">${w}</span>
-        <div style="flex:1;background:#0e1117;border-radius:4px;height:15px;overflow:hidden"><div style="width:${p * 100}%;height:100%;background:${w === answer ? "#3fb950" : "#2b3441"}"></div></div>
-        <span style="width:34px;text-align:right;color:#8b949e">${Math.round(p * 100)}%</span></div>`).join("");
+        <span style="width:54px;color:#374151;font-family:var(--mono)">${w}</span>
+        <div style="flex:1;background:#e5e7eb;border-radius:4px;height:15px;overflow:hidden"><div style="width:${p * 100}%;height:100%;background:${w === answer ? "#15803d" : "#d1d5db"}"></div></div>
+        <span style="width:34px;text-align:right;color:#6b7280">${Math.round(p * 100)}%</span></div>`).join("");
     el.innerHTML =
-      `<div class="readout" style="font-size:16px;margin-bottom:12px">${left} <span style="color:#e3b341;border:1px dashed #e3b341;padding:1px 8px;border-radius:4px">[MASK]</span> ${rt}.</div>
+      `<div class="readout" style="font-size:16px;margin-bottom:12px">${left} <span style="color:#b45309;border:1px dashed #b45309;padding:1px 8px;border-radius:4px">[MASK]</span> ${rt}.</div>
        <div style="margin-bottom:10px"><button class="opt ${bidir ? "on" : ""}" id="mb" style="display:inline-block;width:auto">see both sides (BERT)</button>
        <button class="opt ${bidir ? "" : "on"}" id="ml" style="display:inline-block;width:auto">hide the right side</button></div>${bars}
-       <div style="font-size:12px;color:#8b949e;margin-top:8px">${bidir ? "With the right side visible, <b style='color:#3fb950'>river</b> is obvious." : "Without it, the model is guessing — that's why reading <em>both</em> directions is the point of BERT."}</div>`;
+       <div style="font-size:12px;color:#6b7280;margin-top:8px">${bidir ? "With the right side visible, <b style='color:#15803d'>river</b> is obvious." : "Without it, the model is guessing — that's why reading <em>both</em> directions is the point of BERT."}</div>`;
     el.querySelector("#mb").onclick = () => { bidir = true; draw(); };
     el.querySelector("#ml").onclick = () => { bidir = false; draw(); };
   }
@@ -547,18 +564,18 @@ function poolWidget(el) {
     if (on.length) { mx /= on.length; my /= on.length; }
     let svg = on.map((x) => {
       const ex = cx + Math.cos(x.a * Math.PI / 180) * R, ey = cy - Math.sin(x.a * Math.PI / 180) * R;
-      return `<line x1="${cx}" y1="${cy}" x2="${ex}" y2="${ey}" stroke="#3a4452" stroke-width="2"/><text x="${ex + 4}" y="${ey}" fill="#6e7681" font-size="12">${x.w}</text>`;
+      return `<line x1="${cx}" y1="${cy}" x2="${ex}" y2="${ey}" stroke="#9ca3af" stroke-width="2"/><text x="${ex + 4}" y="${ey}" fill="#9ca3af" font-size="12">${x.w}</text>`;
     }).join("");
     if (on.length) {
       const ma = Math.atan2(my, mx), ml = Math.hypot(mx, my);
       const ex = cx + Math.cos(ma) * R * ml, ey = cy - Math.sin(ma) * R * ml;
-      svg += `<line x1="${cx}" y1="${cy}" x2="${ex}" y2="${ey}" stroke="#6ea8fe" stroke-width="4"/><circle cx="${ex}" cy="${ey}" r="5" fill="#6ea8fe"/><text x="${ex + 6}" y="${ey - 4}" fill="#6ea8fe" font-size="13">sentence</text>`;
+      svg += `<line x1="${cx}" y1="${cy}" x2="${ex}" y2="${ey}" stroke="#2563eb" stroke-width="4"/><circle cx="${ex}" cy="${ey}" r="5" fill="#2563eb"/><text x="${ex + 6}" y="${ey - 4}" fill="#2563eb" font-size="13">sentence</text>`;
     }
     const chips = words.map((x, i) => `<button class="opt ${x.on ? "on" : ""}" data-i="${i}" style="display:inline-block;width:auto;margin:3px 6px 3px 0">${x.w}</button>`).join("");
     el.innerHTML =
       `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">${svg}</svg>
-       <div style="font-size:13px;color:#8b949e;margin:6px 0">Toggle words; the bold <b style="color:#6ea8fe">sentence vector</b> is their average:</div>${chips}
-       <div style="font-size:12px;color:#8b949e;margin-top:8px">Mean-pooling collapses a whole sentence to one point you can compare by cosine — LSA's 1990 trick again, on far smarter inputs.</div>`;
+       <div style="font-size:13px;color:#6b7280;margin:6px 0">Toggle words; the bold <b style="color:#2563eb">sentence vector</b> is their average:</div>${chips}
+       <div style="font-size:12px;color:#6b7280;margin-top:8px">Mean-pooling collapses a whole sentence to one point you can compare by cosine — LSA's 1990 trick again, on far smarter inputs.</div>`;
     el.querySelectorAll(".opt[data-i]").forEach((b) => b.onclick = () => { words[+b.dataset.i].on = !words[+b.dataset.i].on; draw(); });
   }
   draw();
@@ -578,17 +595,17 @@ function twinsWidget(el) {
       if (j === focus) return;
       if (mode === "decoder" && j > focus) return;     // causal mask: no reading the future
       const x1 = xs[focus], x2 = xs[j], mx = (x1 + x2) / 2, h = y - 26 - Math.abs(x1 - x2) * 0.16;
-      arcs += `<path d="M${x1} ${y - 9} Q ${mx} ${h} ${x2} ${y - 9}" fill="none" stroke="#6ea8fe" stroke-width="1.6" opacity=".75" marker-end="url(#ah)"/>`;
+      arcs += `<path d="M${x1} ${y - 9} Q ${mx} ${h} ${x2} ${y - 9}" fill="none" stroke="#2563eb" stroke-width="1.6" opacity=".75" marker-end="url(#ah)"/>`;
     });
     const dots = toks.map((t, i) =>
-      `<circle cx="${xs[i]}" cy="${y}" r="7" fill="${i === focus ? "#e3b341" : "#1c2330"}" stroke="${i === focus ? "#e3b341" : "#2b3441"}" style="cursor:pointer" data-i="${i}"/><text x="${xs[i]}" y="${y + 24}" fill="#8b949e" font-size="12" text-anchor="middle">${t}</text>`).join("");
+      `<circle cx="${xs[i]}" cy="${y}" r="7" fill="${i === focus ? "#b45309" : "#f3f4f6"}" stroke="${i === focus ? "#b45309" : "#d1d5db"}" style="cursor:pointer" data-i="${i}"/><text x="${xs[i]}" y="${y + 24}" fill="#6b7280" font-size="12" text-anchor="middle">${t}</text>`).join("");
     el.innerHTML =
       `<div style="margin-bottom:10px"><button class="opt ${mode === "encoder" ? "on" : ""}" data-m="encoder" style="display:inline-block;width:auto">Encoder · understand (BERT)</button>
        <button class="opt ${mode === "decoder" ? "on" : ""}" data-m="decoder" style="display:inline-block;width:auto">Decoder · write (GPT)</button></div>
        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto">
-         <defs><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 z" fill="#6ea8fe"/></marker></defs>${arcs}${dots}
+         <defs><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 z" fill="#2563eb"/></marker></defs>${arcs}${dots}
        </svg>
-       <div style="font-size:12px;color:#8b949e;margin-top:6px">Click a token to focus it. ${mode === "encoder" ? "Encoder reads <b>both</b> sides — full context to understand." : "Decoder reads only the <b>past</b> — so it can predict the next word without cheating."}</div>`;
+       <div style="font-size:12px;color:#6b7280;margin-top:6px">Click a token to focus it. ${mode === "encoder" ? "Encoder reads <b>both</b> sides — full context to understand." : "Decoder reads only the <b>past</b> — so it can predict the next word without cheating."}</div>`;
     el.querySelectorAll(".opt[data-m]").forEach((b) => b.onclick = () => { mode = b.dataset.m; draw(); });
     el.querySelectorAll("circle[data-i]").forEach((c) => c.onclick = () => { focus = +c.dataset.i; draw(); });
   }
@@ -600,7 +617,7 @@ function twinsWidget(el) {
 // rare ones shatter into pieces, nothing is ever out-of-vocabulary.
 function bpeWidget(el) {
   const vocab = ["▁the", "▁token", "izing", "▁low", "est", "er", "▁new", "▁is", "▁fun", "▁under", "stand", "ing", "tion", "▁a", "ly", "ed", "s"];
-  const colors = ["#6ea8fe", "#b692ff", "#3fb950", "#e3b341", "#f0883e", "#56d4dd"];
+  const colors = ["#2563eb", "#7c3aed", "#15803d", "#b45309", "#c2410c", "#0e7490"];
   function tokenize(text) {
     const out = [];
     text.trim().split(/\s+/).filter(Boolean).forEach((word) => {
@@ -621,12 +638,12 @@ function bpeWidget(el) {
     const nWords = inp.value.trim().split(/\s+/).filter(Boolean).length;
     const chips = toks.map((t, i) => {
       const col = colors[i % colors.length];
-      return `<span style="display:inline-block;margin:2px;padding:2px 7px;border-radius:5px;font-family:var(--mono);font-size:13px;background:${col}22;border:1px solid ${col};color:#e6edf3">${t.replace("▁", "·")}</span>`;
+      return `<span style="display:inline-block;margin:2px;padding:2px 7px;border-radius:5px;font-family:var(--mono);font-size:13px;background:${col}22;border:1px solid ${col};color:#1f2937">${t.replace("▁", "·")}</span>`;
     }).join("");
     out.innerHTML =
       `<div style="margin:12px 0;min-height:28px">${chips}</div>
        <div class="readout"><b>${toks.length}</b> tokens · ${nWords} words</div>
-       <div style="font-size:12px;color:#8b949e;margin-top:6px">"·" marks a word start. Common chunks stay whole; rare ones split. The model's real unit is the token, not the word — which is why it can miscount the letters in "strawberry".</div>`;
+       <div style="font-size:12px;color:#6b7280;margin-top:6px">"·" marks a word start. Common chunks stay whole; rare ones split. The model's real unit is the token, not the word — which is why it can miscount the letters in "strawberry".</div>`;
   }
   inp.oninput = render; render();
 }
@@ -650,14 +667,14 @@ function scalingWidget(el) {
     const rows = skills.map((k) => {
       const on = params >= k.at;
       return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0;opacity:${on ? 1 : .4}">
-        <span style="color:${on ? "#3fb950" : "#6e7681"}">${on ? "●" : "○"}</span>
-        <span style="color:#c9d4e0">${k.s}</span>
-        <span style="color:#6e7681;font-size:12px">${on ? "" : "unlocks ~" + fmt(k.at)}</span></div>`;
+        <span style="color:${on ? "#15803d" : "#9ca3af"}">${on ? "●" : "○"}</span>
+        <span style="color:#374151">${k.s}</span>
+        <span style="color:#9ca3af;font-size:12px">${on ? "" : "unlocks ~" + fmt(k.at)}</span></div>`;
     }).join("");
     out.innerHTML =
       `<div class="readout">size: <b>${fmt(params)}</b> params → Chinchilla data: <b>${fmt(tokens)}</b> tokens</div>
        <div style="margin:12px 0">${rows}</div>
-       <div style="font-size:12px;color:#8b949e">Loss falls smoothly, but skills appear in jumps — <em>emergence</em>. And size alone isn't enough: a model this big needs ~${fmt(tokens)} tokens or it's starved (the Chinchilla correction).</div>`;
+       <div style="font-size:12px;color:#6b7280">Loss falls smoothly, but skills appear in jumps — <em>emergence</em>. And size alone isn't enough: a model this big needs ~${fmt(tokens)} tokens or it's starved (the Chinchilla correction).</div>`;
   }
   sl.oninput = render; render();
 }
@@ -677,16 +694,16 @@ function rlhfWidget(el) {
     const ranked = order.length === answers.length;
     const cards = answers.map((a, i) => {
       const rank = order.indexOf(i), reward = ranked ? answers.length - rank : null;
-      return `<div class="opt" data-i="${i}" style="display:block;width:100%;cursor:${order.includes(i) ? "default" : "pointer"};${rank === 0 ? "border-color:#3fb950" : ""}">
+      return `<div class="opt" data-i="${i}" style="display:block;width:100%;cursor:${order.includes(i) ? "default" : "pointer"};${rank === 0 ? "border-color:#15803d" : ""}">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-          <span>${a.t} <span style="color:#6e7681;font-size:12px">— ${a.k}</span></span>
-          <span style="font-family:var(--mono);color:${rank === 0 ? "#3fb950" : "#8b949e"};white-space:nowrap">${order.includes(i) ? "#" + (rank + 1) : "rank?"}${reward != null ? ` · +${reward}` : ""}</span></div></div>`;
+          <span>${a.t} <span style="color:#9ca3af;font-size:12px">— ${a.k}</span></span>
+          <span style="font-family:var(--mono);color:${rank === 0 ? "#15803d" : "#6b7280"};white-space:nowrap">${order.includes(i) ? "#" + (rank + 1) : "rank?"}${reward != null ? ` · +${reward}` : ""}</span></div></div>`;
     }).join("");
     el.innerHTML =
-      `<div style="font-size:13px;color:#8b949e;margin-bottom:8px">Prompt: <b style="color:#c9d4e0">${prompt}</b></div>
-       <div style="font-size:12px;color:#8b949e;margin-bottom:10px">${ranked ? "Reward model learned your preference ↓" : "Click the answers best → worst:"}</div>${cards}
+      `<div style="font-size:13px;color:#6b7280;margin-bottom:8px">Prompt: <b style="color:#374151">${prompt}</b></div>
+       <div style="font-size:12px;color:#6b7280;margin-bottom:10px">${ranked ? "Reward model learned your preference ↓" : "Click the answers best → worst:"}</div>${cards}
        <div style="margin-top:10px"><button class="opt" id="rr" style="display:inline-block;width:auto">↺ reset</button></div>
-       ${ranked ? `<div class="readout" style="margin-top:8px">LLM now steered toward → <b>${answers[order[0]].t}</b></div><div style="font-size:12px;color:#8b949e;margin-top:4px">Same engine underneath — just <em>aimed</em> at what people prefer. That's RLHF.</div>` : ""}`;
+       ${ranked ? `<div class="readout" style="margin-top:8px">LLM now steered toward → <b>${answers[order[0]].t}</b></div><div style="font-size:12px;color:#6b7280;margin-top:4px">Same engine underneath — just <em>aimed</em> at what people prefer. That's RLHF.</div>` : ""}`;
     el.querySelectorAll(".opt[data-i]").forEach((c) => c.onclick = () => { const i = +c.dataset.i; if (!order.includes(i)) { order.push(i); render(); } });
     el.querySelector("#rr").onclick = () => { order = []; render(); };
   }
@@ -706,77 +723,19 @@ function thinkWidget(el) {
   ];
   const tok = [0, 40, 170, 380], acc = [22, 41, 88, 97];
   el.innerHTML =
-    `<div style="font-size:13px;color:#8b949e;margin-bottom:8px">A bat and a ball cost $1.10. The bat costs $1 more than the ball. <b style="color:#c9d4e0">How much is the ball?</b></div>
+    `<div style="font-size:13px;color:#6b7280;margin-bottom:8px">A bat and a ball cost $1.10. The bat costs $1 more than the ball. <b style="color:#374151">How much is the ball?</b></div>
      <div><label style="width:auto">thinking budget</label> <input id="thk" type="range" min="0" max="3" value="0" style="width:52%;vertical-align:middle"></div><div id="thkout" style="margin-top:12px"></div>`;
   const sl = el.querySelector("#thk"), out = el.querySelector("#thkout");
   function render() {
     const n = +sl.value;
     out.innerHTML =
       `<div class="readout" style="margin-bottom:8px">tokens to think: <b>${tok[n]}</b> &nbsp; accuracy: <b>${acc[n]}%</b></div>
-       <div style="background:#0e1117;border-radius:4px;height:10px;overflow:hidden;margin-bottom:12px"><div style="width:${acc[n]}%;height:100%;background:#3fb950;transition:.2s"></div></div>
-       <div style="background:#0e1117;border:1px solid #2b3441;border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;color:#c9d4e0;white-space:pre-wrap;min-height:2em">${steps[n]}</div>
-       <div style="font-size:12px;color:#8b949e;margin-top:8px">More room to think → it catches its own mistake. Reasoning wasn't programmed; rewarding only <em>verified-correct</em> answers pressured it to emerge.</div>`;
+       <div style="background:#e5e7eb;border-radius:4px;height:10px;overflow:hidden;margin-bottom:12px"><div style="width:${acc[n]}%;height:100%;background:#15803d;transition:.2s"></div></div>
+       <div style="background:#e5e7eb;border:1px solid #d1d5db;border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;color:#374151;white-space:pre-wrap;min-height:2em">${steps[n]}</div>
+       <div style="font-size:12px;color:#6b7280;margin-top:8px">More room to think → it catches its own mistake. Reasoning wasn't programmed; rewarding only <em>verified-correct</em> answers pressured it to emerge.</div>`;
   }
   sl.oninput = render; render();
 }
-
-// Animated header: a field of square "pixels" that ripple via layered sine
-// interference + a slow domain warp (organic flow), brighten under the cursor,
-// and radiate a ring on click — all in the blue→violet palette. Decoration only;
-// pauses when scrolled off-screen, and renders a single still frame if the user
-// prefers reduced motion.
-function mountHero() {
-  const cv = document.getElementById("herofx");
-  if (!cv) return;
-  const ctx = cv.getContext("2d");
-  const GAP = 13, A = [110, 168, 254], B = [182, 146, 255];
-  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let W = 0, H = 0, cols = 0, rows = 0, raf = 0, t0 = 0, rippleT = -10, mx = -999, my = -999;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  function resize() {
-    const r = cv.getBoundingClientRect();
-    W = r.width; H = r.height;
-    cv.width = W * dpr; cv.height = H * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cols = Math.ceil(W / GAP) + 1; rows = Math.ceil(H / GAP) + 1;
-  }
-  function frame(ts) {
-    if (!t0) t0 = ts;
-    const t = (ts - t0) / 1000, rAge = t - rippleT;
-    ctx.clearRect(0, 0, W, H);
-    for (let gy = 0; gy < rows; gy++) {
-      for (let gx = 0; gx < cols; gx++) {
-        const x = gx * GAP, y = gy * GAP;
-        const wx = x + 9 * Math.sin(y * 0.03 + t * 0.6);   // domain warp → flowing distortion
-        const wy = y + 9 * Math.cos(x * 0.025 - t * 0.5);
-        let v = (Math.sin(wx * 0.045 + t * 1.1) + Math.sin(wy * 0.06 - t * 0.9) + Math.sin((wx + wy) * 0.035 + t * 1.4)) / 3;
-        v = (v + 1) / 2;
-        const dx = x - mx, dy = y - my, d = Math.hypot(dx, dy);
-        if (rAge < 1.6) v += Math.sin(d * 0.14 - rAge * 9) * Math.exp(-d / 90) * Math.exp(-rAge * 1.3) * 0.9; // click ripple
-        v = Math.max(0, Math.min(1, v + Math.exp(-d / 70) * 0.6));   // glow under pointer
-        if (v < 0.08) continue;
-        const e = v * v, sz = 1.2 + e * 4.2;
-        ctx.globalAlpha = 0.12 + e * 0.85;
-        ctx.fillStyle = `rgb(${Math.round(A[0] + (B[0] - A[0]) * v)},${Math.round(A[1] + (B[1] - A[1]) * v)},${Math.round(A[2] + (B[2] - A[2]) * v)})`;
-        ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
-      }
-    }
-    ctx.globalAlpha = 1;
-    if (!reduce) raf = requestAnimationFrame(frame);
-  }
-  cv.addEventListener("pointermove", (e) => { const r = cv.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
-  cv.addEventListener("pointerdown", () => { rippleT = t0 ? (performance.now() - t0) / 1000 : 0; });
-  cv.addEventListener("pointerleave", () => { mx = my = -999; });
-  window.addEventListener("resize", () => { resize(); if (reduce) requestAnimationFrame(frame); });
-  resize();
-  if (reduce) { requestAnimationFrame(frame); return; }
-  // pause the loop when the header scrolls out of view to save battery
-  new IntersectionObserver((es) => es.forEach((en) => {
-    if (en.isIntersecting && !raf) raf = requestAnimationFrame(frame);
-    else if (!en.isIntersecting && raf) { cancelAnimationFrame(raf); raf = 0; }
-  })).observe(cv);
-}
-mountHero();
 
 // ---- nav ----
 document.getElementById("prev").addEventListener("click", () => { if (current > 0) { current--; render(); } });

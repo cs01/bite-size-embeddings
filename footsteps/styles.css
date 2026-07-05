@@ -1,15 +1,15 @@
 :root {
-  --bg: #0e1117;
-  --panel: #161b22;
-  --panel-2: #1c2330;
-  --ink: #e6edf3;
-  --muted: #8b949e;
-  --line: #2b3441;
-  --accent: #6ea8fe;
-  --accent-2: #b692ff;
-  --good: #3fb950;
-  --bad: #f85149;
-  --gold: #e3b341;
+  --bg: #ffffff;
+  --panel: #fafaf8;
+  --panel-2: #f1f2f0;
+  --ink: #1a1a1a;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --accent: #2563eb;
+  --accent-2: #7c3aed;
+  --good: #15803d;
+  --bad: #dc2626;
+  --gold: #b45309;
   --mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
@@ -18,7 +18,7 @@ html, body { margin: 0; height: 100%; }
 body {
   background: var(--bg);
   color: var(--ink);
-  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 17px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
 
 #app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
@@ -30,7 +30,7 @@ body {
   overflow-y: auto;
   padding: 22px 18px;
 }
-.rail-head h1 { margin: 0; font-size: 22px; letter-spacing: .5px; }
+.rail-head h1 { margin: 0; font-size: 21px; letter-spacing: -0.2px; }
 .rail-head .sub { margin: 2px 0 14px; color: var(--muted); font-size: 13px; }
 .hublink { display: inline-block; margin-bottom: 12px; color: var(--muted); font-size: 12px; text-decoration: none; }
 .hublink:hover { color: var(--accent); }
@@ -39,12 +39,12 @@ body {
   display: block; margin: 22px auto; padding: 14px 18px;
   border: 1px solid var(--line); border-left: 3px solid var(--accent-2);
   border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 15px;
-  background: linear-gradient(90deg, rgba(182,146,255,.06), transparent);
+  background: var(--bg);
 }
 .deepdive:hover { border-color: var(--accent-2); }
 .deepdive b { color: var(--accent-2); }
-#overall-progress { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
-#overall-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .4s; }
+#overall-progress { height: 5px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+#overall-bar { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
 #overall-label { font-size: 12px; color: var(--muted); }
 
 #timeline { margin-top: 20px; position: relative; }
@@ -62,7 +62,7 @@ body {
   position: absolute; left: 7px; top: 12px; width: 14px; height: 14px;
   border-radius: 50%; background: var(--bg); border: 2px solid var(--line);
 }
-.tl-item.active .tl-dot { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(110,168,254,.2); }
+.tl-item.active .tl-dot { border-color: var(--accent); }
 .tl-item.done .tl-dot { background: var(--good); border-color: var(--good); }
 .tl-year { font-family: var(--mono); font-size: 12px; color: var(--accent); }
 .tl-title { font-size: 13.5px; }
@@ -71,17 +71,15 @@ body {
 /* ---- stage ---- */
 #stage { display: flex; flex-direction: column; overflow: hidden; }
 
-/* ---- animated header: rippling pixel field (canvas), org/robotic vibe ---- */
-#hero { position: relative; flex: none; height: 94px; overflow: hidden;
-  background: radial-gradient(120% 160% at 18% 0%, #11161f 0%, #0a0d13 70%);
-  border-bottom: 1px solid var(--line); }
-#herofx { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#hero-label { position: absolute; left: 6vw; top: 50%; transform: translateY(-50%); pointer-events: none; }
-.hl-title { font-family: var(--mono); font-weight: 700; letter-spacing: 7px; font-size: 23px;
-  color: #eef3fa; text-shadow: 0 0 22px rgba(110,168,254,.55), 0 0 4px rgba(182,146,255,.4); }
-.hl-sub { display: block; font-size: 10.5px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
-@media (max-width: 760px) { #hero { height: 72px; } .hl-title { font-size: 17px; letter-spacing: 4px; } }
-#lesson { overflow-y: auto; padding: 56px 6vw; flex: 1; }
+/* ---- header: plain title bar, no decoration ---- */
+#hero {
+  flex: none; padding: 18px 6vw;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.hl-title { font-weight: 700; font-size: 17px; letter-spacing: -0.2px; color: var(--ink); }
+.hl-sub { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; }
+#lesson { overflow-y: auto; padding: 48px 6vw; flex: 1; }
 /* hold every block to one reading-measure column (~70ch), flush-left. NOT
    margin:auto centering — p/h3/h2 carry their own `margin: x 0` which beats the
    `#lesson > *` selector on specificity, so auto here would center only the
@@ -91,40 +89,40 @@ body {
 @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
 
 .era { font-family: var(--mono); color: var(--accent); letter-spacing: 2px; font-size: 13px; }
-h2.lt { font-size: 33px; margin: 8px 0 5px; line-height: 1.14; letter-spacing: -.4px; }
+h2.lt { font-size: 32px; margin: 8px 0 5px; line-height: 1.14; letter-spacing: -.4px; }
 .people { color: var(--muted); font-style: italic; margin-bottom: 18px; }
 
 /* ---- TL;DR hook: the one takeaway, pinned above the story ---- */
 .tldr {
   display: flex; gap: 14px; align-items: baseline;
-  margin: 8px 0 24px; padding: 16px 18px;
-  background: linear-gradient(90deg, rgba(110,168,254,.10), rgba(110,168,254,.02));
+  margin: 8px 0 24px; padding: 14px 18px;
+  background: var(--panel);
   border: 1px solid var(--line); border-left: 3px solid var(--accent);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 .tldr-tag {
   font-family: var(--mono); font-size: 11px; letter-spacing: 1px; font-weight: 700;
   color: var(--accent); text-transform: uppercase; flex: none; padding-top: 2px;
 }
-.tldr-body { font-size: 16.5px; color: #dbe4ee; }
-.tldr-body strong { color: #fff; }
+.tldr-body { font-size: 16.5px; color: var(--ink); }
+.tldr-body strong { color: var(--ink); }
 
 /* ---- plain-words glossary, before the jargon arrives ---- */
 .concepts {
   margin: 24px 0; padding: 16px 20px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
 }
-.concepts h4 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
+.concepts h4 { margin: 0 0 10px; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
 .concepts dl { margin: 0; }
 .concept { display: grid; grid-template-columns: 150px 1fr; gap: 6px 16px; padding: 7px 0; border-top: 1px solid var(--line); }
 .concept:first-child { border-top: none; }
 .concept dt { font-weight: 600; color: var(--accent-2); font-size: 14.5px; }
-.concept dd { margin: 0; color: #c4cdd8; font-size: 14.5px; }
+.concept dd { margin: 0; color: #374151; font-size: 14.5px; }
 @media (max-width: 760px) { .concept { grid-template-columns: 1fr; gap: 2px; } }
 
-#lesson h3 { font-size: 19px; margin: 30px 0 6px; }
+#lesson h3 { font-size: 20px; margin: 30px 0 6px; }
 #lesson p { margin: 12px 0; }
-.lead { font-size: 18px; color: #cdd6e0; }
+.lead { font-size: 18px; color: #374151; }
 
 /* flat margin-notes, not stacked cards — a quiet left rule carries the color, and
    the label is a small run-in lead (not a shouty stacked badge on every block) */
@@ -151,47 +149,47 @@ h2.lt { font-size: 33px; margin: 8px 0 5px; line-height: 1.14; letter-spacing: -
 .src-link:hover { color: var(--accent); border-color: var(--accent); }
 
 code { font-family: var(--mono); background: var(--panel-2); padding: 1px 6px; border-radius: 4px; font-size: 14px; }
-.eq { font-family: var(--mono); background: var(--panel); padding: 12px 16px; border-radius: 8px; display: block; margin: 16px 0; color: #cdd6e0; overflow-x: auto; }
+.eq { font-family: var(--mono); background: var(--panel); border: 1px solid var(--line); padding: 12px 16px; border-radius: 8px; display: block; margin: 16px 0; color: var(--ink); overflow-x: auto; font-size: 14px; }
 em { color: var(--ink); font-style: italic; }
-strong { color: #f0f4f9; font-weight: 600; }
+strong { color: var(--ink); font-weight: 600; }
 
 /* ---- quiz ---- */
 /* a hard, labelled break so the quiz reads as a distinct section, not just one
    more box bleeding into the lesson body */
 .quiz-sep { display: flex; align-items: center; gap: 16px; margin: 54px 0 0; }
-.quiz-sep::before, .quiz-sep::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line) 35%, var(--line) 65%, transparent); }
+.quiz-sep::before, .quiz-sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .quiz-sep span { font-family: var(--mono); font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
 .quiz {
   background: var(--panel); border: 1px solid var(--line); border-top: 2px solid var(--accent);
-  border-radius: 12px; padding: 22px 24px; margin: 18px 0 8px;
-  box-shadow: 0 10px 34px rgba(0,0,0,.28);
+  border-radius: 8px; padding: 22px 24px; margin: 18px 0 8px;
 }
 .quiz .q { margin: 20px 0 10px; font-weight: 600; }
 .quiz .q:first-child { margin-top: 2px; }
 .opt {
   display: block; width: 100%; text-align: left; padding: 11px 14px; margin: 7px 0;
-  background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+  background: var(--bg); border: 1px solid var(--line); color: var(--ink);
   border-radius: 8px; cursor: pointer; font-size: 15px; transition: .15s;
+  font-family: inherit;
 }
 .opt:hover:not(:disabled) { border-color: var(--accent); }
-.opt.correct { border-color: var(--good); background: rgba(63,185,80,.12); }
-.opt.wrong { border-color: var(--bad); background: rgba(248,81,73,.12); }
+.opt.correct { border-color: var(--good); background: rgba(21,128,61,.07); }
+.opt.wrong { border-color: var(--bad); background: rgba(220,38,38,.06); }
 .opt:disabled { cursor: default; }
 .explain { margin-top: 10px; font-size: 14px; color: var(--muted); display: none; }
 .explain.show { display: block; }
 .explain b { color: var(--ink); }
 
 /* ---- interactive widgets ---- */
-.widget { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 28px 0; box-shadow: 0 6px 24px rgba(0,0,0,.22); }
+.widget { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 18px; margin: 28px 0; }
 .widget svg { display: block; margin: 0 auto; }
 .widget label { font-size: 13px; color: var(--muted); display: inline-block; width: 120px; }
-.widget input[type=range] { vertical-align: middle; }
+.widget input[type=range] { vertical-align: middle; accent-color: var(--accent); }
 .readout { font-family: var(--mono); font-size: 15px; margin-top: 10px; }
 .readout b { color: var(--accent); }
 /* generic "selected" pill state shared by every widget's toggle buttons/chips */
-.widget .opt.on, .opt.mask.on { border-color: var(--accent); background: rgba(110,168,254,.14); color: var(--ink); }
+.widget .opt.on, .opt.mask.on { border-color: var(--accent); background: rgba(37,99,235,.08); color: var(--ink); }
 .widget .wsel {
-  font-family: var(--mono); font-size: 14px; background: var(--panel-2);
+  font-family: var(--mono); font-size: 14px; background: var(--bg);
   color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; cursor: pointer;
 }
 .widget .wtext {
@@ -202,7 +200,7 @@ strong { color: #f0f4f9; font-weight: 600; }
 
 /* ---- nav footer ---- */
 #nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 8vw; border-top: 1px solid var(--line); background: var(--panel); }
-#nav button { background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+#nav button { background: var(--bg); color: var(--ink); border: 1px solid var(--line); padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-family: inherit; }
 #nav button:hover:not(:disabled) { border-color: var(--accent); }
 #nav button:disabled { opacity: .35; cursor: default; }
 #crumb { color: var(--muted); font-size: 13px; font-family: var(--mono); }

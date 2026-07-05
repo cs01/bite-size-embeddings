@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lecture Atlas — the modern LM stack, mapped</title>
   <meta name="description" content="The whole modern language-model stack on one page — Stanford CS336's 18 lectures laid out as a lifecycle map of concepts, takeaways, and quotes. Click any node for detail." />
-  <meta name="theme-color" content="#0e1117" />
+  <meta name="theme-color" content="#ffffff" />
   <meta name="author" content="Chad Smith" />
-  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;circle cx='16' cy='16' r='10' fill='%237ee787'/&gt;&lt;/svg&gt;" />
+  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;circle cx='16' cy='16' r='10' fill='%2315803d'/&gt;&lt;/svg&gt;" />
   <style>
     :root {
-      --bg: #0e1117; --panel: #161b22; --panel-2: #1c2330; --line: #2b3441;
-      --ink: #e6edf3; --muted: #8b949e; --accent: #7ee787; --accent-2: #6ea8fe;
+      --bg: #ffffff; --panel: #fafaf8; --panel-2: #f1f2f0; --line: #e5e7eb; --line-2: #d1d5db;
+      --ink: #1a1a1a; --body: #374151; --muted: #6b7280; --faint: #9ca3af;
+      --accent: #15803d; --accent-2: #2563eb;
       --mono: ui-monospace, "SF Mono", Menlo, monospace;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--ink);
+    body { margin: 0; background: var(--bg); color: var(--body);
       font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    h1, h2, h3 { color: var(--ink); }
     a { color: var(--accent-2); }
     main { width: 100%; max-width: 1100px; margin: 0 auto; padding: 6vh 24px 100px; }
     .crumb { font-size: 13px; margin: 0 0 20px; }
@@ -63,10 +65,10 @@
     .node.dim { opacity: .18; }
     .node.hit { box-shadow: 0 0 0 1px var(--c) inset; }
 
-    mark { background: rgba(126,231,135,.25); color: var(--ink); border-radius: 3px; padding: 0 1px; }
+    mark { background: rgba(21,128,61,.15); color: var(--ink); border-radius: 3px; padding: 0 1px; }
 
     /* ---- detail drawer ---- */
-    #scrim { position: fixed; inset: 0; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none;
+    #scrim { position: fixed; inset: 0; background: rgba(0,0,0,.3); opacity: 0; pointer-events: none;
       transition: opacity .2s; z-index: 40; }
     #scrim.open { opacity: 1; pointer-events: auto; }
     #drawer { position: fixed; top: 0; right: 0; height: 100%; width: 480px; max-width: 92vw;
@@ -108,7 +110,7 @@
     <div class="kicker">reference · the field on one page</div>
     <h1>Lecture Atlas</h1>
     <p class="blurb">The whole modern language-model stack, mapped as a lifecycle — from raw data and tokens to a served, aligned model. Every lecture is a node; click one for its concepts, takeaways, and the lines worth remembering.</p>
-    <p class="src">Distilled from <a href="https://www.youtube.com/playlist?list=PLoROMvodv4rMqXOcazWaTUHhq-yembLCV" target="_blank" rel="noopener">Stanford CS336: Language Modeling from Scratch (Spring 2026)</a>. Cards are study notes — watch the lecture for the real thing.</p>
+    <p class="src">Distilled from <a href="https://www.youtube.com/playlist?list=PLoROMvodv4rMqXOcazWaTUHhq-yembLCV" target="_blank" rel="noopener">Stanford CS336: Language Modeling from Scratch (Spring 2025)</a>. Cards are study notes — watch the lecture for the real thing.</p>
 
     <div class="toolbar">
       <input id="q" type="search" placeholder="Search the whole map — concepts, takeaways, quotes…  (e.g. flash attention, KV cache, GRPO)" autocomplete="off" />
@@ -116,6 +118,7 @@
     </div>
 
     <div id="map"></div>
+    <div id="noresults" class="empty" style="display:none">No lectures match that search.</div>
 
     <footer>Built by Chad Smith · <a href="https://github.com/cs01/bite-size-embeddings">source on GitHub</a></footer>
   </main>
@@ -138,7 +141,7 @@
         "Character-, byte-, and word-level tokenizers are each suboptimal (rare-token blowup, compression ratio of one, unbounded vocab), motivating BPE as the practical compromise."
       ],
       quotes: [
-        "We offer no explanation. We attribute the success of these architectures all else to divine benevolence.",
+        "We offer no explanation as to why these architectures seem to work; we attribute their success, as all else, to divine benevolence.",
         "The right interpretation is that algorithms that scale are what matters.",
         "Scaling laws are not laws of nature. They don't just happen automatically. You kind of have to will them into existence."
       ]
@@ -150,7 +153,7 @@
       takeaways: [
         "BFloat16 keeps FP32's full dynamic range by shifting bits from mantissa to exponent, trading resolution for stability — the practical sweet spot for stochastic training.",
         "Einops names tensor dimensions instead of index positions, so batched matmuls and transposes become explicit and self-documenting (einsum sums out unmentioned dims, reduce generalizes sum/mean/max).",
-        "A matmul's forward pass costs ~2·(tokens)·(parameters) FLOPs; the backward pass is exactly twice that (gradients w.r.t. inputs and parameters), giving the canonical 6ND per training step.",
+        "A matmul's forward pass costs ~2·(tokens)·(parameters) FLOPs; the backward pass is exactly twice that (gradients w.r.t. inputs and parameters), giving the canonical 6ND total training FLOPs for N parameters over D tokens.",
         "Arithmetic intensity (FLOPs per byte moved) vs the accelerator's intensity (~295 for H100) decides the bottleneck: element-wise ops and matrix-vector products are memory bound; large matmuls are compute bound.",
         "GELU and ReLU take essentially the same wall-clock time despite GELU's extra arithmetic, because both are memory bound — the extra compute hides behind data movement.",
         "Optimizer states dominate memory (Adam needs 8 bytes/param for two moments); gradient accumulation and activation checkpointing trade compute for memory to enable larger models."
@@ -260,7 +263,7 @@
         "ZeRO-3 / FSDP also shards parameters, gathering them per layer on demand; the extra all-gather is made nearly free by overlapping communication with computation.",
         "Data parallelism consumes the batch-size budget, bounded by the critical batch size, forcing model-parallel methods once you run out of batch to spend.",
         "Pipeline parallelism communicates only small activations point-to-point so it suits slow inter-node links, but suffers bubbles that shrink with more micro-batches; zero-bubble scheduling defers weight-gradient work to fill gaps.",
-        "Tensor and expert parallelism are communication-hungry all-to-all primitives best kept within a fast node (~8 GPUs); for MoE, expert parallel beats tensor parallel by keeping matmuls large.",
+        "Tensor and expert parallelism are communication-hungry collectives (all-reduce for TP, all-to-all for EP) best kept within a fast node (~8 GPUs); for MoE, expert parallel beats tensor parallel by keeping matmuls large.",
         "Activations often dwarf parameter memory at scale; the practical lower bound 34·S·B·H/T comes from combining tensor, sequence parallel, and activation recomputation."
       ],
       quotes: [
@@ -405,7 +408,7 @@
         "GRPO's length normalization and std division deviate from a first-principles policy gradient, causing wrong answers to grow unboundedly long and over-weighting too-easy or too-hard problems.",
         "DeepSeek R1 showed a base model plus GRPO with simple outcome accuracy and format rewards can nearly match OpenAI o1 — and that process reward models and tree search were not necessary.",
         "Curriculum and difficulty filtering matter since problems too hard give no reward signal; teams filter to medium difficulty and drop problems the model already masters.",
-        "RLVR is only as robust as its reward, so reward hacking (agents reading git history for fixes, non-robust verifiers like the Lean compiler) is a recurring danger as compute scales."
+        "RLVR is only as robust as its reward, so reward hacking (agents reading git history for fixes, exploits found even in nominally robust verifiers like the Lean compiler) is a recurring danger as compute scales."
       ],
       quotes: [
         "If you see a blog post titled 'the 37 implementation details of PPO', you know this is an algorithm very sensitive to your implementation decisions.",
@@ -453,14 +456,14 @@
 
   // Lifecycle stages: theme grouping that turns the syllabus into a map of the field.
   const STAGES = [
-    { key: "data",   c: "#7ee787", label: "Data & Tokens",          blurb: "What goes in — sourcing, filtering, and turning bytes into tokens.", ns: [13, 14, 1] },
-    { key: "arch",   c: "#6ea8fe", label: "Architecture",            blurb: "The model itself — the Transformer and its alternatives.",          ns: [3, 4] },
-    { key: "hw",     c: "#f0883e", label: "Hardware & Kernels",      blurb: "The metal — GPUs, the memory wall, and writing fast kernels.",      ns: [2, 5, 6] },
-    { key: "dist",   c: "#b692ff", label: "Distributed Training",    blurb: "Scaling out across GPUs, nodes, and whole data centers.",          ns: [7, 8] },
-    { key: "scale",  c: "#f778ba", label: "Scaling Laws",            blurb: "Predicting returns — extrapolating small runs to large ones.",     ns: [9, 11] },
-    { key: "eval",   c: "#e3b341", label: "Evaluation",              blurb: "Measuring it — and why every benchmark is partly a lie.",          ns: [12] },
-    { key: "post",   c: "#56d4dd", label: "Post-Training & Alignment", blurb: "Making it useful — SFT, RLHF, RLVR, and multimodality.",         ns: [15, 16, 17] },
-    { key: "serve",  c: "#ff7b72", label: "Inference & Serving",     blurb: "Shipping it — the repeated cost of generating every token.",       ns: [10, 18] }
+    { key: "data",   c: "#15803d", label: "Data & Tokens",          blurb: "What goes in — sourcing, filtering, and turning bytes into tokens.", ns: [13, 14, 1] },
+    { key: "arch",   c: "#2563eb", label: "Architecture",            blurb: "The model itself — the Transformer and its alternatives.",          ns: [3, 4] },
+    { key: "hw",     c: "#c2410c", label: "Hardware & Kernels",      blurb: "The metal — GPUs, the memory wall, and writing fast kernels.",      ns: [2, 5, 6] },
+    { key: "dist",   c: "#7c3aed", label: "Distributed Training",    blurb: "Scaling out across GPUs, nodes, and whole data centers.",          ns: [7, 8] },
+    { key: "scale",  c: "#db2777", label: "Scaling Laws",            blurb: "Predicting returns — extrapolating small runs to large ones.",     ns: [9, 11] },
+    { key: "eval",   c: "#b45309", label: "Evaluation",              blurb: "Measuring it — and why every benchmark is partly a lie.",          ns: [12] },
+    { key: "post",   c: "#0e7490", label: "Post-Training & Alignment", blurb: "Making it useful — SFT, RLHF, RLVR, and multimodality.",         ns: [15, 16, 17] },
+    { key: "serve",  c: "#dc2626", label: "Inference & Serving",     blurb: "Shipping it — the repeated cost of generating every token.",       ns: [10, 18] }
   ];
 
   const byN = Object.fromEntries(LECTURES.map(l => [l.n, l]));
@@ -513,6 +516,7 @@
       const any = [...st.querySelectorAll(".node")].some(n => !n.classList.contains("dim"));
       st.style.display = any ? "" : "none";
     });
+    document.getElementById("noresults").style.display = (terms.length && !shown) ? "" : "none";
     stats.innerHTML = terms.length
       ? `<b>${shown}</b> of ${LECTURES.length} lectures match`
       : `<b>${LECTURES.length}</b> lectures · <b>${STAGES.length}</b> stages · <b>${conceptCount}</b> distinct concepts`;
@@ -546,6 +550,8 @@
   scrim.addEventListener("click", closeDrawer);
   document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
   q.addEventListener("input", applySearch);
+  // back-navigation form restoration can repopulate #q without firing input
+  window.addEventListener("pageshow", applySearch);
 
   buildMap();
   applySearch();

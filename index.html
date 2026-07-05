@@ -3,78 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Learn — interactive courses on how machines understand</title>
-  <meta name="description" content="Short, interactive, play-as-you-read courses on the ideas behind modern AI — from singular value decomposition to self-attention and RLHF." />
-  <meta name="theme-color" content="#0e1117" />
+  <title>How LLMs work — an interactive course</title>
+  <meta name="description" content="A short, interactive, play-as-you-read course on how large language models work — from word embeddings to self-attention and RLHF." />
+  <meta name="theme-color" content="#ffffff" />
   <meta name="author" content="Chad Smith" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Interactive courses on how machines understand" />
-  <meta property="og:description" content="Play-as-you-read courses on the ideas behind modern AI." />
-  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;circle cx='16' cy='16' r='10' fill='%236ea8fe'/&gt;&lt;/svg&gt;" />
+  <meta property="og:title" content="How LLMs work — an interactive course" />
+  <meta property="og:description" content="Play-as-you-read: embeddings, attention, transformers, RLHF. Live widgets and quizzes." />
+  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;circle cx='16' cy='16' r='10' fill='%232563eb'/&gt;&lt;/svg&gt;" />
   <style>
     :root {
-      --bg: #0e1117; --panel: #161b22; --panel-2: #1c2330; --line: #2b3441;
-      --ink: #e6edf3; --muted: #8b949e; --accent: #6ea8fe; --accent-2: #b692ff;
+      --bg: #ffffff; --panel: #fafaf8; --line: #e5e7eb;
+      --ink: #1a1a1a; --body: #374151; --muted: #6b7280; --accent: #2563eb; --accent-2: #7c3aed;
       --mono: ui-monospace, "SF Mono", Menlo, monospace;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0; background: var(--bg); color: var(--ink);
-      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       min-height: 100vh; display: flex; flex-direction: column; align-items: center;
     }
-    main { width: 100%; max-width: 760px; padding: 9vh 24px 64px; }
-    .kicker { font-family: var(--mono); color: var(--accent); letter-spacing: 2px; font-size: 13px; text-transform: uppercase; }
-    h1 { font-size: 34px; line-height: 1.15; margin: 8px 0 10px; }
-    .blurb { color: var(--muted); font-size: 17px; margin: 0 0 36px; }
-    .tracks { display: grid; gap: 16px; }
+    main { width: 100%; max-width: 680px; padding: 9vh 24px 64px; }
+    .kicker { font-family: var(--mono); color: var(--accent); letter-spacing: 2px; font-size: 12px; text-transform: uppercase; }
+    h1 { font-size: 32px; line-height: 1.15; margin: 8px 0 10px; letter-spacing: -0.3px; }
+    .blurb { color: var(--muted); font-size: 17px; margin: 0 0 32px; }
     a.card {
       display: block; text-decoration: none; color: inherit;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-      padding: 22px 24px; transition: border-color .15s, transform .15s;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+      padding: 22px 24px; transition: border-color .15s;
     }
-    a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    a.card:hover { border-color: var(--accent); }
     .card .era { font-family: var(--mono); font-size: 12px; letter-spacing: 1px; color: var(--accent); }
-    .card.svd .era { color: var(--accent-2); }
-    .card.lectures .era, .card.lectures .go { color: #7ee787; }
     .card h2 { margin: 4px 0 6px; font-size: 22px; }
-    .card p { margin: 0; color: var(--muted); font-size: 15px; }
-    .card .go { color: var(--accent); font-size: 14px; margin-top: 12px; display: inline-block; }
-    .card.svd .go { color: var(--accent-2); }
-    footer { color: var(--muted); font-size: 13px; margin-top: 40px; }
+    .card p { margin: 0; color: var(--body); font-size: 15px; }
+    .card .go { color: var(--accent); font-size: 14px; margin-top: 12px; display: inline-block; font-weight: 500; }
+    .extras { margin-top: 36px; }
+    .extras h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 0 0 10px; }
+    .extras a { display: block; padding: 10px 0; border-top: 1px solid var(--line); text-decoration: none; color: inherit; }
+    .extras a:hover .t { color: var(--accent); }
+    .extras .t { font-weight: 600; font-size: 15px; }
+    .extras .d { color: var(--muted); font-size: 13.5px; }
+    footer { color: var(--muted); font-size: 13px; margin-top: 44px; }
     footer a { color: var(--muted); }
   </style>
 </head>
 <body>
   <main>
     <div class="kicker">interactive · play as you read</div>
-    <h1>How machines learned to understand</h1>
-    <p class="blurb">Short, hands-on courses on the ideas behind modern AI. Click through, drag the widgets, quiz yourself. No math wall — the intuition first.</p>
+    <h1>How LLMs work</h1>
+    <p class="blurb">One continuous story, told concept by concept — from "you shall know a word by the company it keeps" to embeddings, self-attention, and RLHF. Drag the widgets, quiz yourself. No math wall.</p>
 
-    <div class="tracks">
-      <a class="card footsteps" href="footsteps/">
-        <div class="era">the story · 1950s → today</div>
-        <h2>Footsteps</h2>
-        <p>How we taught machines meaning — one continuous thread from Firth's "company it keeps" through embeddings, self-attention, and RLHF. 13 chapters, live widgets, quizzes.</p>
-        <span class="go">Start the journey →</span>
+    <a class="card" href="footsteps/">
+      <div class="era">the course · 1950s → today</div>
+      <h2>Footsteps</h2>
+      <p>How we taught machines meaning — 13 short chapters, each with a live interactive widget and a quick self-check quiz. Progress saves in your browser.</p>
+      <span class="go">Start the course →</span>
+    </a>
+
+    <div class="extras">
+      <h3>Optional deep dives</h3>
+      <a href="svd/">
+        <span class="t">SVD Explorer</span>
+        <div class="d">The linear algebra behind chapter 2, built bottom-up — vectors → eigenvectors → image compression.</div>
       </a>
-
-      <a class="card svd" href="svd/">
-        <div class="era">the math, deep · linear algebra</div>
-        <h2>SVD Explorer</h2>
-        <p>Singular value decomposition built bottom-up: vectors → eigenvectors → rotate·stretch·rotate → image compression. The full intuition behind <em>Footsteps</em> chapter 2 (LSA).</p>
-        <span class="go">Explore SVD →</span>
-      </a>
-
-      <a class="card lectures" href="lectures/">
-        <div class="era">the field, mapped · 18 lectures</div>
-        <h2>Lecture Atlas</h2>
-        <p>The whole modern LM stack on one page — Stanford CS336 laid out as a lifecycle map from data and tokens to a served, aligned model. Click any node for its concepts, takeaways, and quotes.</p>
-        <span class="go">Open the map →</span>
+      <a href="lectures/">
+        <span class="t">Lecture Atlas</span>
+        <div class="d">Stanford CS336's 18 lectures distilled into a searchable one-page map of the modern LM stack.</div>
       </a>
     </div>
 
-    <footer>Built by Chad Smith · <a href="https://github.com/cs01/bite-size-embeddings">source on GitHub</a></footer>
+    <footer>Built by <a href="https://chadsmith.dev">Chad Smith</a> · <a href="https://github.com/cs01/bite-size-embeddings">source on GitHub</a></footer>
   </main>
 </body>
 </html>

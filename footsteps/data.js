@@ -44,7 +44,7 @@ const LESSONS = [
     body: [
       { p: "Fast-forward to information retrieval. You're building search. A user types <code>car</code>; a perfect document says <code>automobile</code> and never once says <code>car</code>. Keyword matching returns nothing. This is the <strong>synonymy problem</strong>, and it's killing recall.", lead: true },
       { desk: "Keyword search is literal. <code>car</code> ≠ <code>automobile</code> to a string matcher, even though they mean the same thing. How do you match on <em>meaning</em>?" },
-      { p: "The 1990 answer was <strong>Latent Semantic Analysis (LSA)</strong> — 'latent' because it digs out hidden meaning the literal words don't show. It takes Firth literally and builds the <strong>term–document matrix</strong>: rows = words, columns = documents, each cell = does this word appear here. Now every word is a row vector of which documents it lives in — its 'company,' as numbers." },
+      { p: "The 1990 answer was <strong>Latent Semantic Analysis (LSA)</strong> — 'latent' because it digs out hidden meaning the literal words don't show. It takes Firth literally and builds the <strong>term–document matrix</strong>: rows = words, columns = documents, each cell = does this word appear here (real systems weight these counts, but the idea is the same). Now every word is a row vector of which documents it lives in — its 'company,' as numbers." },
       { p: "But the matrix is huge and noisy. The trick: <strong>SVD</strong> (singular value decomposition) compresses it to a few hundred latent dimensions. Words that co-occur with similar documents collapse toward the <em>same direction</em> in this smaller space. <code>car</code> and <code>automobile</code>, never seen together, end up neighbors because they keep the same company." },
 
       { h: "SVD, the intuitive version: friend-of-a-friend" },
@@ -55,7 +55,7 @@ const LESSONS = [
       { p: "Concretely: SVD invents a few hidden <strong>themes</strong> (a 'vehicle' theme, a 'finance' theme…) and re-describes every word by <em>how much of each theme it has</em>, instead of <em>which raw documents</em>. Now <code>car</code> and <code>automobile</code> both score high on the vehicle theme → their vectors point the same way → cosine ≈ 1. <strong>Synonyms discovered, with zero direct overlap.</strong>" },
       { p: '<a class="deepdive" href="../svd/#idea">Optional side-track → <b>SVD Explorer</b>: the linear-algebra machinery (rotate·stretch·rotate, Eckart–Young) behind this compression, for the curious. Not needed for the rest of the journey.</a>' },
 
-      { leap: "A word is now a <strong>point in space</strong>. Similar meaning ⇒ nearby points. 'Nearby' becomes math: the <em>angle</em> between two vectors. This is the birth of the embedding — and of <strong>cosine similarity</strong>, still the exact metric your code-search tool uses today." },
+      { leap: "A word is now a <strong>point in space</strong>. Similar meaning ⇒ nearby points. 'Nearby' becomes math: the <em>angle</em> between two vectors. This is the birth of the embedding. <strong>Cosine similarity</strong> — a metric LSA inherited from 1960s vector-space retrieval — is still exactly what your code-search tool uses today." },
       { widget: "cosine" },
       { p: "Move the vectors above. Small angle ⇒ cosine near 1 ⇒ 'same meaning.' Ninety degrees ⇒ cosine 0 ⇒ unrelated. Every semantic search is this, in 384 dimensions instead of 2." },
       { legacy: "Vector embeddings are now ~35 years old. LSA had no neural net, no attention, no GPU — just counting and linear algebra. The <em>idea</em> of meaning-as-geometry was already complete in 1990." },
@@ -142,7 +142,7 @@ const LESSONS = [
       { widget: "polysemy" },
       { p: "This is the <strong>polysemy / context problem</strong>. Static embeddings are context-blind. They know a word's <em>average</em> company across all of English, but not what it means <em>right here, in this sentence</em>." },
       { leap: "The needed idea: an embedding should be a function of the <strong>whole sentence</strong>, not a lookup. <code>bank</code>'s vector should <em>change</em> depending on whether <code>river</code> or <code>cash</code> sits nearby. We need words to <em>read their neighbors</em> and update themselves." },
-      { aside: "Hold that phrase — 'read their neighbors and update.' That is <strong>attention</strong>, three years early. The problem is now perfectly shaped for the solution." },
+      { aside: "Hold that phrase — 'read their neighbors and update.' That is <strong>attention</strong>, a year early. The problem is now perfectly shaped for the solution." },
       { legacy: "Meanwhile, a totally separate field — machine translation — was about to invent exactly this mechanism for a totally different reason. They didn't know they were solving the embedding problem too." },
     ],
     quiz: [
@@ -175,7 +175,7 @@ const LESSONS = [
     quiz: [
       { q: "What bottleneck did Bahdanau attention remove?", options: ["Slow disk I/O", "Cramming the whole source sentence into one fixed vector", "Too many GPUs", "Spelling errors"], answer: 1, explain: "The single fixed-length context vector strangled long sentences. Attention lets the decoder read all source states selectively." },
       { q: "What are the attention weights αᵢ?", options: ["Random noise", "Learned amounts of how much to focus on each input element", "Word frequencies", "Fixed constants"], answer: 1, explain: "Soft, learned, differentiable focus — they sum to 1 and say <b>where to look</b> for each output step." },
-      { q: "Attention was originally invented for…", options: ["Image classification", "Machine translation", "Speech synthesis", "Search ranking"], answer: 1, explain: "2014, NMT. It was an add-on to RNN encoder–decoders — not yet a standalone architecture." },
+      { q: "Attention entered NLP through…", options: ["Image classification", "Machine translation", "Speech synthesis", "Search ranking"], answer: 1, explain: "2014, NMT. It was an add-on to RNN encoder–decoders — not yet a standalone architecture." },
     ],
   },
 
@@ -306,7 +306,7 @@ const LESSONS = [
       { p: "The fix: learn the <em>atoms</em> from the data itself. <strong>Byte-Pair Encoding (BPE)</strong> starts from raw characters and repeatedly merges the most frequent adjacent pair into a new token. Common words collapse to a single token; rare words break into a few familiar pieces." },
       { eq: "low  lower  lowest  newest  widest\nmerge 'e'+'s' → 'es'      (most frequent pair)\nmerge 'es'+'t' → 'est'\nnow: lowest = low+est ,  newest = new+est" },
       { widget: "bpe" },
-      { leap: "The vocabulary is finite (~50–100k tokens) yet <strong>nothing is out-of-vocabulary</strong> — worst case, a weird string falls back to single bytes. Frequent text is cheap (few tokens); rare text degrades gracefully. The model's real unit isn't the word — it's the <strong>token</strong>: often a word, sometimes a subword, sometimes a byte." },
+      { leap: "The vocabulary is finite (~50–100k tokens) yet <strong>nothing is out-of-vocabulary</strong> — worst case, a weird string falls back to single characters (single bytes, in the byte-level variant modern models use). Frequent text is cheap (few tokens); rare text degrades gracefully. The model's real unit isn't the word — it's the <strong>token</strong>: often a word, sometimes a subword, sometimes a byte." },
       { aside: "This is why an LLM can miscount the letters in <code>strawberry</code> or fumble a rhyme — it never sees letters, only these chunks. It's also why API bills are priced 'per token.'" },
       { legacy: "Everything ahead — embeddings, attention, next-token prediction — runs on these tokens, not words. BPE is the unglamorous first step that makes the pipeline finite and robust. <em>Then</em> each token gets its embedding vector, and the story you've been reading continues." },
     ],

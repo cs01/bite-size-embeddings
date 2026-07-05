@@ -6,16 +6,17 @@
 <title>SVD Explorer — Learn Singular Value Decomposition</title>
 <style>
   :root {
-    --bg: #0d1117; --panel: #161b22; --border: #30363d;
-    --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
-    --u: #f778ba; --v: #56d364; --sigma: #e3b341;
+    --bg: #ffffff; --panel: #fafaf8; --subtle: #f1f2f0; --border: #e5e7eb;
+    --ink: #1a1a1a; --fg: #374151; --muted: #6b7280; --accent: #2563eb;
+    --u: #7c3aed; --v: #15803d; --sigma: #b45309;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body { margin: 0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
     background: var(--bg); color: var(--fg); line-height: 1.6; }
+  h1, h2, h3 { color: var(--ink); }
   header { padding: 30px 24px; text-align: center; border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, #161b22, #0d1117); }
+    background: var(--panel); }
   header h1 { margin: 0 0 8px; font-size: 28px; }
   header p { margin: 0; color: var(--muted); }
   /* ---- two-pane: left rail + scrolling stage ---- */
@@ -40,7 +41,7 @@
   .tl-dot { position: absolute; left: 8px; top: 11px; width: 14px; height: 14px; border-radius: 50%;
     background: var(--bg); border: 2px solid var(--border); transition: .15s; }
   .tab:hover .tl-dot { border-color: var(--accent); }
-  .tab.active .tl-dot { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 3px #58a6ff33; }
+  .tab.active .tl-dot { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 3px #2563eb33; }
   .tl-kick { display: block; font-family: ui-monospace, monospace; font-size: 11px; color: var(--accent); letter-spacing: .3px; }
   .tl-title { display: block; font-size: 14px; color: var(--fg); }
   .tab.active .tl-title { font-weight: 600; }
@@ -61,7 +62,7 @@
   .card h3 { font-size: 16px; color: var(--accent); }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
-  canvas { background: #0a0e14; border-radius: 8px; display: block; width: 100%; }
+  canvas { background: #fafaf8; border: 1px solid #e5e7eb; border-radius: 8px; display: block; width: 100%; }
   label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
   input[type=range] { width: 100%; accent-color: var(--accent); }
   .matrix-input { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 200px; }
@@ -90,7 +91,7 @@
   .cap { text-align: center; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
   .caption { background: var(--bg); border-radius: 8px; padding: 12px 14px; font-size: 14px; min-height: 48px; margin-top: 10px; border-left: 3px solid var(--accent); }
   .lock { color: var(--v); font-weight: 700; }
-  .ex { background: #08160f; border: 1px solid #1d4d33; border-radius: 8px; padding: 14px 16px;
+  .ex { background: rgba(21,128,61,.05); border: 1px solid rgba(21,128,61,.3); border-radius: 8px; padding: 14px 16px;
     font-family: ui-monospace, monospace; font-size: 13px; margin: 14px 0; line-height: 1.7; }
   .ex .h { color: var(--v); font-weight: 700; display: block; margin-bottom: 8px; font-family: system-ui; font-size: 14px; }
   .ex b { color: var(--sigma); }
@@ -110,7 +111,7 @@
   .mulwrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center;
     background: var(--bg); border-radius: 8px; padding: 18px; font-family: ui-monospace, monospace; font-size: 18px; }
   .mulop { color: var(--muted); font-size: 22px; }
-  .activemat { outline: 2px solid var(--fg); border-radius: 8px; padding: 4px; background: #ffffff10; }
+  .activemat { outline: 2px solid var(--fg); border-radius: 8px; padding: 4px; background: #00000006; }
   /* search palette */
   .searchbtn { margin-top: 14px; padding: 7px 14px; background: var(--panel); border: 1px solid var(--border);
     color: var(--muted); border-radius: 8px; cursor: pointer; font-size: 13px; }
@@ -131,7 +132,7 @@
   .sr small { color: var(--muted); display: block; font-size: 12px; margin-top: 3px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-empty { padding: 18px; color: var(--muted); }
-  @keyframes flashbg { 0%,100% { background: transparent; } 25% { background: #58a6ff44; } }
+  @keyframes flashbg { 0%,100% { background: transparent; } 25% { background: #2563eb44; } }
   dl.gl dt.flash, dl.gl dd.flash { animation: flashbg 1.4s ease; border-radius: 4px; }
 </style>
 </head>
@@ -187,7 +188,7 @@
       <p style="margin-top:14px">Two tall bars = <b>two real patterns</b> carry almost all the information. The short ones are just noise — barely any height at all.</p>
       <h3 style="margin-top:18px">So what IS a "pattern"?</h3>
       <p>A pattern is one <b>taste axis</b> — a single left-to-right line. SVD drops <b>both</b> every movie <i>and</i> every person onto that <b>one</b> line. The strongest informative one here is <b>romance ↔ action</b>, found with zero labels. Here's where each lands:</p>
-      <div class="cap" style="text-align:center;margin-bottom:4px">one shared axis — ◆ movies above the line, ● people below · <span class="sc">gold = action end</span>, <span style="color:#58a6ff">blue = romance end</span></div>
+      <div class="cap" style="text-align:center;margin-bottom:4px">one shared axis — ◆ movies above the line, ● people below · <span class="sc">gold = action end</span>, <span style="color:#2563eb">blue = romance end</span></div>
       <canvas id="why-axis" width="800" height="220" style="height:auto;aspect-ratio:800/220"></canvas>
       <p style="margin-top:8px">The whole point in one picture: <b>action movies and action fans pile on the same side</b> (right); romance movies and romance fans share the other (left). That lining-up <b>is</b> the pattern — and it's why your spot predicts your taste: you'll like the movies sitting near you. (Pattern 1, the strongest of all, is just "how much you rate things overall" — less interesting, so we show pattern 2.)</p>
       <div class="ex">
@@ -323,12 +324,12 @@
       <div class="eq">A = U Σ V<sup>T</sup></div>
       <p>Eigenvectors were fragile — not every matrix has them. SVD is the bulletproof version that works on <b>any</b> matrix (even non-square). Every matrix turns an <b>input</b> vector into an <b>output</b> vector, and SVD says that trip is always the same three moves:</p>
       <ul>
-        <li><b class="vc">V<sup>T</sup></b> — a <b>rotation</b> of the input (pick the right axes to look along).</li>
+        <li><b class="vc">V<sup>T</sup></b> — a <b>rotation</b> of the input, possibly with a flip (pick the right axes to look along).</li>
         <li><b class="sc">Σ</b> — a pure <b>stretch</b>. Diagonal, ≥ 0. The <i>singular values</i> σ₁ ≥ σ₂ ≥ … say how much each axis scales.</li>
-        <li><b class="uc">U</b> — a <b>rotation</b> of the output (where the stretched axes land).</li>
+        <li><b class="uc">U</b> — a <b>rotation</b> of the output, possibly with a flip (where the stretched axes land).</li>
       </ul>
       <p class="note">Every input→output map = <b>rotate the input → stretch → rotate into the output</b>. SVD finds those axes. See it move in Tab 4.</p>
-      <div class="ex" style="background:#1a1206;border-color:#5c4410">
+      <div class="ex" style="background:rgba(180,83,9,.05);border-color:rgba(180,83,9,.3)">
         <span class="h" style="color:var(--sigma)">⚠ Don't mix up two different "inputs"</span>
         Easy trap: thinking you feed a <b>vector</b> into SVD. You don't.<br><br>
         • The <b class="uc">matrix A</b> is the thing that eats a vector → spits out a vector (lengths differ if A isn't square).<br>
@@ -409,7 +410,7 @@
           <button class="act ghost" id="anim-reset">↺ reset</button>
           <label style="margin-top:14px">scrub manually</label>
           <input id="anim-scrub" type="range" min="0" max="300" value="0">
-          <p class="note" style="margin-top:10px">The decoder ring for the notation: <b>U</b> &amp; <b>V</b> only rotate (never resize), <b>Σ</b> is the only stretch. Three letters, three moves.</p>
+          <p class="note" style="margin-top:10px">The decoder ring for the notation: <b>U</b> &amp; <b>V</b> only rotate — possibly with a flip — never resize; <b>Σ</b> is the only stretch. Three letters, three moves.</p>
         </div>
       </div>
       <div class="cap" style="margin-top:14px">the matrix being applied lights up as the animation runs:</div>
@@ -472,7 +473,7 @@
     <div class="card">
       <h2>▶ Fourier in motion — adding harmonics = adding layers</h2>
       <p>Each spinning circle is one wave (one "layer"). Their stacked tip (<span style="color:var(--u)">pink</span>) traces the curve on the right (<span class="vc">green</span>). Add harmonics → the curve snaps toward a sharp <b>square wave</b> — the exact same way adding rank-1 layers snaps toward A.</p>
-      <label>harmonics / layers = <b id="fr-k-label" class="val">3</b></label>
+      <label>harmonics / layers = <b id="fr-k-label" class="val">2</b></label>
       <input id="fr-k" type="range" min="1" max="25" step="2" value="3">
       <canvas id="fourier" width="680" height="300"></canvas>
       <p class="note">1 harmonic = a lone sine (rank-1). Crank it: each smaller circle sharpens the corners a little more — and just like SVD's σ's, the early ones do nearly all the work.</p>
@@ -523,7 +524,7 @@
         <dt><span class="vc">Eigenvector</span></dt><dd>A direction that A only <b>stretches, never turns</b> (Tab 2). Most matrices have a few; some have none.</dd>
         <dt><span class="sc">Eigenvalue (λ)</span></dt><dd>How much that eigenvector gets stretched. <span class="mono">A·v = λ·v</span>.</dd>
         <dt><span class="sc">Singular value (σ)</span></dt><dd>A stretch factor along one of SVD's axes. Always ≥ 0. The bulletproof version of an eigenvalue — <b>every</b> matrix has them. σ&gt;1 stretches, σ=1 no change, σ=0 flattens.</dd>
-        <dt>Orthonormal / rotation</dt><dd>A set of directions that are all perpendicular and length 1. A matrix built from them just <b>rotates</b> space (never resizes). U and V are these.</dd>
+        <dt>Orthonormal / rotation</dt><dd>A set of directions that are all perpendicular and length 1. A matrix built from them just <b>rotates</b> space, possibly with a flip (never resizes). U and V are these.</dd>
         <dt><span class="uc">U</span>, <span class="sc">Σ</span>, <span class="vc">V</span></dt><dd>The three pieces of SVD: <span class="vc">Vᵀ</span> rotates the input, <span class="sc">Σ</span> stretches by the σ's, <span class="uc">U</span> rotates the output. <span class="mono">A = UΣVᵀ</span>.</dd>
       </dl>
     </div>
@@ -609,10 +610,10 @@ function plane(ctx,W,H,sc){
   const X=x=>cx+x*sc, Y=y=>cy-y*sc;
   function grid(){
     ctx.clearRect(0,0,W,H);
-    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
     for(let i=-6;i<=6;i++){ ctx.beginPath();ctx.moveTo(X(i),0);ctx.lineTo(X(i),H);ctx.stroke();
       ctx.beginPath();ctx.moveTo(0,Y(i));ctx.lineTo(W,Y(i));ctx.stroke(); }
-    ctx.strokeStyle='#484f58'; ctx.lineWidth=1.5;
+    ctx.strokeStyle='#9ca3af'; ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
   }
@@ -649,8 +650,8 @@ function eventToMath(canvas, P, e){
     P.grid();
     const b=apply(A,x);
     // highlight the row being computed by drawing its contribution
-    P.arrow(b[0],b[1],'#f778ba',3);
-    P.arrow(x[0],x[1],'#56d364',3);
+    P.arrow(b[0],b[1],'#7c3aed',3);
+    P.arrow(x[0],x[1],'#15803d',3);
     const f=n=>(n>=0?' ':'')+n.toFixed(2);
     const hi=(r)=> hl===r ? 'background:#1f6feb33;border-radius:4px;padding:0 3px':'';
     document.getElementById('mv-readout').innerHTML =
@@ -698,7 +699,7 @@ function eventToMath(canvas, P, e){
     P.grid();
     const E=eigs(A);
     // draw eigen-lines faintly
-    ctx.strokeStyle='#56d36433'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]);
+    ctx.strokeStyle='#15803d33'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]);
     E.forEach(e=>{ ctx.beginPath();
       ctx.moveTo(P.X(-e.v[0]*6),P.Y(-e.v[1]*6)); ctx.lineTo(P.X(e.v[0]*6),P.Y(e.v[1]*6)); ctx.stroke(); });
     ctx.setLineDash([]);
@@ -709,9 +710,9 @@ function eventToMath(canvas, P, e){
     let d=Math.abs(angA-angV)%(Math.PI*2); d=Math.min(d,Math.PI*2-d);
     const gap=Math.min(d,Math.abs(d-Math.PI));
     const locked=gap<0.04;
-    if(locked){ ctx.shadowBlur=25; ctx.shadowColor='#56d364'; }
-    P.arrow(Av[0],Av[1],'#f778ba',3.5);
-    P.arrow(vn[0],vn[1],locked?'#7ee787':'#56d364',3.5);
+    if(locked){ ctx.shadowBlur=25; ctx.shadowColor='#15803d'; }
+    P.arrow(Av[0],Av[1],'#7c3aed',3.5);
+    P.arrow(vn[0],vn[1],locked?'#16a34a':'#15803d',3.5);
     ctx.shadowBlur=0;
     const lam=(vn[0]*Av[0]+vn[1]*Av[1]); // λ = v·Av (v unit)
     document.getElementById('eig-readout').innerHTML =
@@ -737,8 +738,11 @@ function eventToMath(canvas, P, e){
     let best=null,bd=9;
     E.forEach(e=>{ [0,Math.PI].forEach(off=>{
       const a=Math.atan2(e.v[1],e.v[0])+off;
-      let d=Math.abs(((a-cur+Math.PI)%(Math.PI*2))-Math.PI);
-      if(d<bd){bd=d;best=a;} }); });
+      // JS % keeps sign, so normalize the delta to [-pi,pi] by hand
+      let delta=(a-cur)%(Math.PI*2);
+      if(delta>Math.PI)delta-=Math.PI*2; if(delta<-Math.PI)delta+=Math.PI*2;
+      const d=Math.abs(delta);
+      if(d<bd){bd=d;best=cur+delta;} }); });
     const start=cur, t0=performance.now();
     (function step(t){ const k=Math.min(1,(t-t0)/450);
       const ang=start+(best-start)*(k*k*(3-2*k));
@@ -764,16 +768,16 @@ function drawGeo(){
   const A=getA(), {U,S,V}=svd(A);
   Pin.grid();
   const ic=geoIn.getContext('2d');
-  ic.strokeStyle='#58a6ff'; ic.lineWidth=2; ic.beginPath();
+  ic.strokeStyle='#2563eb'; ic.lineWidth=2; ic.beginPath();
   for(let a=0;a<=6.3;a+=0.05){ const x=Math.cos(a),y=Math.sin(a);
     a===0?ic.moveTo(Pin.X(x),Pin.Y(y)):ic.lineTo(Pin.X(x),Pin.Y(y)); } ic.stroke();
-  Pin.arrow(V[0][0],V[1][0],'#56d364'); Pin.arrow(V[0][1],V[1][1],'#3a8c42');
+  Pin.arrow(V[0][0],V[1][0],'#15803d'); Pin.arrow(V[0][1],V[1][1],'#065f46');
   Pout.grid();
   const oc=geoOut.getContext('2d');
-  oc.strokeStyle='#f778ba'; oc.lineWidth=2; oc.beginPath();
+  oc.strokeStyle='#7c3aed'; oc.lineWidth=2; oc.beginPath();
   for(let a=0;a<=6.3;a+=0.05){ const p=apply(A,[Math.cos(a),Math.sin(a)]);
     a===0?oc.moveTo(Pout.X(p[0]),Pout.Y(p[1])):oc.lineTo(Pout.X(p[0]),Pout.Y(p[1])); } oc.stroke();
-  Pout.arrow(U[0][0]*S[0],U[1][0]*S[0],'#f778ba'); Pout.arrow(U[0][1]*S[1],U[1][1]*S[1],'#a63b6f');
+  Pout.arrow(U[0][0]*S[0],U[1][0]*S[0],'#7c3aed'); Pout.arrow(U[0][1]*S[1],U[1][1]*S[1],'#5b21b6');
   const Vt=[[V[0][0],V[1][0]],[V[0][1],V[1][1]]];
   const Sd=[[S[0],0],[0,S[1]]];
   const Um=[[U[0][0],U[0][1]],[U[1][0],U[1][1]]];
@@ -835,18 +839,18 @@ function drawFrame(t){
   const ctx=animCv.getContext('2d');
   // dashed outline = the TRUE A·(unit circle). Dots must land exactly on it at step 3 — that's the proof UΣVᵀ = A.
   const Atrue=getA();
-  ctx.strokeStyle='#8b949e88'; ctx.setLineDash([4,4]); ctx.lineWidth=1.5; ctx.beginPath();
+  ctx.strokeStyle='#6b728088'; ctx.setLineDash([4,4]); ctx.lineWidth=1.5; ctx.beginPath();
   for(let a=0;a<=6.3;a+=0.05){ const p=apply(Atrue,[Math.cos(a),Math.sin(a)]);
     a===0?ctx.moveTo(Pa.X(p[0]),Pa.Y(p[1])):ctx.lineTo(Pa.X(p[0]),Pa.Y(p[1])); }
   ctx.stroke(); ctx.setLineDash([]);
   stages.forEach(d=>{
     const p=lerp(d.s[seg],d.s[seg+1],e);
-    ctx.fillStyle=`hsl(${d.hue},75%,62%)`;
+    ctx.fillStyle=`hsl(${d.hue},70%,45%)`;
     ctx.beginPath(); ctx.arc(Pa.X(p[0]),Pa.Y(p[1]),3.4,0,6.3); ctx.fill();
   });
   const b1=lerp(basisStages[0][seg],basisStages[0][seg+1],e);
   const b2=lerp(basisStages[1][seg],basisStages[1][seg+1],e);
-  Pa.arrow(b1[0],b1[1],'#ffffff',2.5); Pa.arrow(b2[0],b2[1],'#ff7b72',2.5);
+  Pa.arrow(b1[0],b1[1],'#1a1a1a',2.5); Pa.arrow(b2[0],b2[1],'#dc2626',2.5);
   document.getElementById('anim-cap').innerHTML = capText[seg] || capText[2];
 }
 let raf=null;
@@ -993,7 +997,7 @@ const N=64;
   heat(document.getElementById('why-orig'),R,5);
   const max=S.S[0];
   document.getElementById('why-bars').innerHTML=S.S.map((s,i)=>
-    `<div class="bar" style="height:${Math.max(4,s/max*100)}%;background:${i<2?'var(--sigma)':'#444c56'}"><span>σ${i+1}<br>${s.toFixed(1)}</span></div>`).join('');
+    `<div class="bar" style="height:${Math.max(4,s/max*100)}%;background:${i<2?'var(--sigma)':'#d1d5db'}"><span>σ${i+1}<br>${s.toFixed(1)}</span></div>`).join('');
   // pattern 2 (romance↔action) as ONE shared axis: movies above the line, people below.
   (function(){
     const cv=document.getElementById('why-axis'); if(!cv) return;
@@ -1003,11 +1007,11 @@ const N=64;
     const ppl=users.map((t,i)=>({t,v:S.U[i][1]*sgn,type:'p'}));
     const mx=Math.max(...[...mov,...ppl].map(o=>Math.abs(o.v)))||1;
     const Xv=v=>W/2+v/mx*(W/2-marg);
-    const col=v=>v>=0?'#e3b341':'#58a6ff';
+    const col=v=>v>=0?'#b45309':'#2563eb';
     ctx.clearRect(0,0,W,H);
-    ctx.strokeStyle='#484f58'; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(40,mid);ctx.lineTo(W-40,mid);ctx.stroke();
-    ctx.strokeStyle='#30363d'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath();ctx.moveTo(W/2,28);ctx.lineTo(W/2,H-28);ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle='#6e7681'; ctx.font='13px sans-serif';
+    ctx.strokeStyle='#9ca3af'; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(40,mid);ctx.lineTo(W-40,mid);ctx.stroke();
+    ctx.strokeStyle='#d1d5db'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath();ctx.moveTo(W/2,28);ctx.lineTo(W/2,H-28);ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#6b7280'; ctx.font='13px sans-serif';
     ctx.textAlign='left'; ctx.fillText('◀ romance', 40, 18);
     ctx.textAlign='right'; ctx.fillText('action ▶', W-40, 18);
     // stack labels vertically when points crowd the same spot (matching tastes coincide)
@@ -1021,7 +1025,7 @@ const N=64;
         ctx.fillStyle=c;
         if(o.type==='m'){ const r=6; ctx.beginPath();ctx.moveTo(o.x,mk-r);ctx.lineTo(o.x+r,mk);ctx.lineTo(o.x,mk+r);ctx.lineTo(o.x-r,mk);ctx.closePath();ctx.fill(); }
         else { ctx.beginPath();ctx.arc(o.x,mk,5,0,6.3);ctx.fill(); }
-        ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.fillStyle='#c9d1d9';
+        ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.fillStyle='#374151';
         ctx.fillText(o.t,o.x,ly+(dir<0?0:4));
       });
     }
@@ -1063,10 +1067,10 @@ const N=64;
     const cx=W/2, cy=H/2, sc=Math.min(W,H)/2-pad;
     const X=x=>cx+x*sc, Y=y=>cy-y*sc;
     ctx.clearRect(0,0,W,H);
-    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
     ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
-    ctx.fillStyle='#6e7681'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle='#6b7280'; ctx.font='10px sans-serif'; ctx.textAlign='center';
     ctx.fillText('overall enthusiasm →', cx+96, cy+13);
     ctx.save(); ctx.translate(14,cy); ctx.rotate(-Math.PI/2); ctx.fillText('romance ↔ action', 0, 0); ctx.restore();
     // pick = the person's highest TRUE predicted rating
@@ -1074,26 +1078,26 @@ const N=64;
     const bi=pr.indexOf(Math.max(...pr));
     const p=geoP[ui], pl=Math.hypot(p[0],p[1])||1, ph=[p[0]/pl,p[1]/pl];
     // selected person's taste direction (line through the centre = the average taste)
-    ctx.strokeStyle='#56d36455'; ctx.lineWidth=2; ctx.setLineDash([6,5]);
+    ctx.strokeStyle='#15803d55'; ctx.lineWidth=2; ctx.setLineDash([6,5]);
     ctx.beginPath();ctx.moveTo(X(-ph[0]),Y(-ph[1]));ctx.lineTo(X(ph[0]),Y(ph[1]));ctx.stroke();
     ctx.setLineDash([]);
     // connector: person -> their pick
-    ctx.strokeStyle='#e3b34199'; ctx.lineWidth=1.5;
+    ctx.strokeStyle='#b4530999'; ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(X(p[0]),Y(p[1]));ctx.lineTo(X(geoM[bi][0]),Y(geoM[bi][1]));ctx.stroke();
     geoM.forEach((m,j)=>{
       const px=X(m[0]),py=Y(m[1]),r=j===bi?7:5;
-      ctx.fillStyle=j===bi?'#e3b341':'#8a6d1f';
+      ctx.fillStyle=j===bi?'#b45309':'#b4530966';
       ctx.beginPath();ctx.moveTo(px,py-r);ctx.lineTo(px+r,py);ctx.lineTo(px,py+r);ctx.lineTo(px-r,py);ctx.closePath();ctx.fill();
     });
     geoP.forEach((q,i)=>{
       const px=X(q[0]),py=Y(q[1]),me=i===ui;
-      ctx.fillStyle=me?'#7ee787':'#2ea043';
+      ctx.fillStyle=me?'#16a34a':'#9ca3af';
       ctx.beginPath();ctx.arc(px,py,me?6:4,0,6.3);ctx.fill();
     });
     // labels, with vertical de-collision — matching tastes land on the same spot
     const L=[];
-    geoM.forEach((m,j)=>L.push({x:X(m[0]),y:Y(m[1]),t:movies[j]+(j===bi?' 👍':''),c:j===bi?'#e3b341':'#9aa4ae',b:j===bi}));
-    geoP.forEach((q,i)=>L.push({x:X(q[0]),y:Y(q[1]),t:users[i],c:i===ui?'#7ee787':'#9aa4ae',b:i===ui}));
+    geoM.forEach((m,j)=>L.push({x:X(m[0]),y:Y(m[1]),t:movies[j]+(j===bi?' 👍':''),c:j===bi?'#b45309':'#6b7280',b:j===bi}));
+    geoP.forEach((q,i)=>L.push({x:X(q[0]),y:Y(q[1]),t:users[i],c:i===ui?'#16a34a':'#6b7280',b:i===ui}));
     L.sort((a,b)=>a.y-b.y);
     let lastY=-99,lastX=-999;
     L.forEach(o=>{
@@ -1118,7 +1122,7 @@ const N=64;
       document.getElementById('rec-bars').innerHTML=pred.map((v,i)=>
         `<div style="display:flex;align-items:center;gap:10px;margin:5px 0">`+
           `<span style="width:96px;font-size:13px;color:${i===maxi?'var(--v)':'var(--muted)'}">${movies[i]}</span>`+
-          `<span style="flex:1;background:#0a0e14;border-radius:5px;height:18px;position:relative;overflow:hidden">`+
+          `<span style="flex:1;background:#e5e7eb;border-radius:5px;height:18px;position:relative;overflow:hidden">`+
             `<span style="position:absolute;left:0;top:0;bottom:0;width:${v/5*100}%;background:${i===maxi?'var(--v)':'var(--sigma)'}"></span></span>`+
           `<span style="width:70px;font-size:13px">${v.toFixed(1)}/5 ${i===maxi?'👍':''}</span>`+
         `</div>`).join('');
@@ -1152,13 +1156,13 @@ const N=64;
       exp.innerHTML=`<b class="vc">Row 1</b> · x:  <b class="sc">2·3</b> = 6 …`;},
     ()=>{clr();E('a01').classList.add('hot');E('x1').classList.add('hot');
       exp.innerHTML=`<b class="vc">Row 1</b> · x:  2·3 + <b class="sc">1·1</b> = 7`;},
-    ()=>{clr();E('b0').textContent='7';E('b0').style.color='#e3b341';
+    ()=>{clr();E('b0').textContent='7';E('b0').style.color='#b45309';
       exp.innerHTML=`first output  b₀ = <b class="sc">7</b>.  Now row 2 ↓`;},
     ()=>{clr();E('a10').classList.add('hot');E('x0').classList.add('hot');
       exp.innerHTML=`<b class="vc">Row 2</b> · x:  <b class="sc">1·3</b> = 3 …`;},
     ()=>{clr();E('a11').classList.add('hot');E('x1').classList.add('hot');
       exp.innerHTML=`<b class="vc">Row 2</b> · x:  1·3 + <b class="sc">2·1</b> = 5`;},
-    ()=>{clr();E('b1').textContent='5';E('b1').style.color='#e3b341';
+    ()=>{clr();E('b1').textContent='5';E('b1').style.color='#b45309';
       exp.innerHTML=`done →  A·x = (<b class="sc">7</b>, <b class="sc">5</b>).  Each output = one row dotted with x.`;},
   ];
   let i=0,timer=null;
@@ -1181,26 +1185,26 @@ const N=64;
   const hist=[];
   const slider=document.getElementById('fr-k'), label=document.getElementById('fr-k-label');
   function frame(){
-    const K=+slider.value; label.textContent=K;
+    const K=+slider.value; label.textContent=(K+1)/2;
     ctx.clearRect(0,0,W,H);
-    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();        // midline
     ctx.beginPath(); ctx.moveTo(waveX0,0); ctx.lineTo(waveX0,H); ctx.stroke(); // divider
     // epicycle chain
     let x=cx, y=cy;
     for(let n=1;n<=K;n+=2){
       const r=amp*(4/Math.PI)/n, px=x, py=y;
-      ctx.strokeStyle='#30363d'; ctx.beginPath(); ctx.arc(px,py,r,0,6.2832); ctx.stroke();
+      ctx.strokeStyle='#d1d5db'; ctx.beginPath(); ctx.arc(px,py,r,0,6.2832); ctx.stroke();
       x += r*Math.cos(n*phase);
       y += r*Math.sin(n*phase);
-      ctx.strokeStyle='#58a6ff'; ctx.globalAlpha=.6; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y); ctx.stroke(); ctx.globalAlpha=1;
+      ctx.strokeStyle='#2563eb'; ctx.globalAlpha=.6; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y); ctx.stroke(); ctx.globalAlpha=1;
     }
-    ctx.fillStyle='#f778ba'; ctx.beginPath(); ctx.arc(x,y,4,0,6.2832); ctx.fill();
+    ctx.fillStyle='#7c3aed'; ctx.beginPath(); ctx.arc(x,y,4,0,6.2832); ctx.fill();
     hist.unshift(y); if(hist.length>W-waveX0) hist.pop();
     // connector tip -> wave
-    ctx.strokeStyle='#f778ba'; ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(waveX0,hist[0]); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.strokeStyle='#7c3aed'; ctx.globalAlpha=.4; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(waveX0,hist[0]); ctx.stroke(); ctx.globalAlpha=1;
     // scrolling wave trace
-    ctx.strokeStyle='#56d364'; ctx.lineWidth=2; ctx.beginPath();
+    ctx.strokeStyle='#15803d'; ctx.lineWidth=2; ctx.beginPath();
     for(let i=0;i<hist.length;i++){ const wx=waveX0+i; i===0?ctx.moveTo(wx,hist[i]):ctx.lineTo(wx,hist[i]); }
     ctx.stroke();
     phase+=0.028;
