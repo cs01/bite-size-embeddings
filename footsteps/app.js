@@ -24,30 +24,21 @@ function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
 // ---- section renderers ----
 const CALLOUT_LABEL = { desk: "The problem on their desk", leap: "The leap", aside: "Notice", legacy: "What it left us" };
 
-// One-sentence "if you remember nothing else" hook, pinned to the top of a
-// chapter so a non-expert gets the payoff before the story.
-function renderTldr(tldr) {
-  if (!tldr) return "";
-  return `<div class="tldr"><span class="tldr-tag">TL;DR</span><span class="tldr-body">${tldr}</span></div>`;
+// The resolution, told after the story — what the world came out the other
+// side with. Sits at the bottom so the problem, not the answer, opens each
+// chapter.
+function renderSummary(summary) {
+  if (!summary) return "";
+  return `<div class="summary"><span class="summary-tag">Where this landed</span><span class="summary-body">${summary}</span></div>`;
 }
 
-// Canonical-paper citation(s) for the chapter — a quiet "read the source" link
-// under the title, so the names live in a citation (where they help) instead of
-// in the prose (where they bluff a non-expert).
-function renderSource(src) {
+// Canonical-paper citation(s), offered at the end as further reading — after
+// the story has earned the reader's interest in the source.
+function renderFurther(src) {
   if (!src) return "";
   const arr = Array.isArray(src) ? src : [src];
   const links = arr.map((s) => `<a class="src-link" href="${s.url}" target="_blank" rel="noopener">${s.label} ↗</a>`).join("");
-  return `<div class="sources"><span class="src-icon">paper</span>${links}</div>`;
-}
-
-// Plain-language glossary for the jargon a chapter is about to use — defined
-// up front so the reader is never bluffed by a term they don't know.
-function renderConcepts(concepts) {
-  if (!concepts || !concepts.length) return "";
-  const rows = concepts.map((c) =>
-    `<div class="concept"><dt>${c.t}</dt><dd>${c.d}</dd></div>`).join("");
-  return `<div class="concepts"><h4>Key ideas in plain words</h4><dl>${rows}</dl></div>`;
+  return `<div class="further"><span class="further-tag">Further reading</span>${links}</div>`;
 }
 
 function renderBody(body) {
@@ -94,10 +85,9 @@ function render() {
     `<div class="era">${l.year}</div>` +
     `<h2 class="lt">${l.title}</h2>` +
     `<div class="people">${l.people}</div>` +
-    renderSource(l.source) +
-    renderTldr(l.tldr) +
-    renderConcepts(l.concepts) +
     renderBody(l.body) +
+    renderSummary(l.summary) +
+    renderFurther(l.source) +
     renderQuiz(l.quiz, current);
 
   el.scrollTop = 0;

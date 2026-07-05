@@ -1,21 +1,20 @@
-# Interactive courses — how machines learned to understand
+# How LLMs came to be — an interactive history
 
-Short, hands-on, play-as-you-read courses on the ideas behind modern AI.
-No build step, no dependencies — static HTML/CSS/JS.
+A documentary in chapters: each one opens on the problem the world was stuck on, walks through how people reasoned out of it, and ends with what they carried forward. Plus standalone deep-dive pages. No build step, no dependencies — static HTML/CSS/JS.
 
-**▶ Live: https://cs01.github.io/bite-size-embeddings/**
+**▶ Live: https://chadsmith.dev/how-llms-came-to-be/** (mirror: https://cs01.github.io/bite-size-embeddings/)
 
-## Tracks
+## Pages
 
-| path | course | what it is |
+| repo path | live URL (chadsmith.dev) | what it is |
 |------|--------|-----------|
-| `/` | **Hub** | landing page linking the tracks |
-| `/footsteps/` | **Footsteps** | how we taught machines meaning — Firth → embeddings → self-attention → RLHF. 13 chapters, live widgets, quizzes. Saves progress in `localStorage`. Deep-link a chapter with `#<n>` (e.g. `footsteps/#2`). |
-| `/svd/` | **SVD Explorer** | singular value decomposition built bottom-up: vectors → eigenvectors → geometry → image compression. The math behind Footsteps ch.2 (LSA). |
-| `/lectures/` | **Lecture Atlas** | Stanford CS336 (18 lectures) distilled into searchable cards — concepts, key takeaways, quotes, each linked to the YouTube lecture. Built from `/transcripts/`. |
-| `/transcripts/` | reference | cleaned Stanford CS336 lecture transcripts, used to sanity-check coverage and source the Atlas. Not part of the site. |
+| `/footsteps/` | `/how-llms-came-to-be/` | the main story — Firth → embeddings → self-attention → RLHF. 13 chapters, live widgets, quizzes, summary + further reading at the end of each. Saves progress in `localStorage`. Deep-link a chapter with `#<n>`. |
+| `/svd/` | `/svd/` | **SVD Explorer** — singular value decomposition built bottom-up: vectors → eigenvectors → geometry → image compression. The math behind the LSA chapter. |
+| `/lectures/` | `/lecture-atlas/` | **Lecture Atlas** — Stanford CS336 (18 lectures) distilled into searchable cards, each linked to the YouTube lecture. Built from `/transcripts/`. |
+| `/` | — | landing page for the GitHub Pages mirror only |
+| `/transcripts/` | — | cleaned Stanford CS336 lecture transcripts, used to sanity-check coverage and source the Atlas. Not part of the site. |
 
-The two courses cross-link: Footsteps ch.2 → "go deeper" → SVD Explorer, and SVD Explorer → "back to the story" → Footsteps ch.2.
+Cross-links: the LSA chapter → "go deeper" → SVD Explorer, and SVD Explorer → back to the story.
 
 ## Run locally
 

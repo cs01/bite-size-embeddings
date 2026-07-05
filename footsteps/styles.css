@@ -92,33 +92,19 @@ body {
 h2.lt { font-size: 32px; margin: 8px 0 5px; line-height: 1.14; letter-spacing: -.4px; }
 .people { color: var(--muted); font-style: italic; margin-bottom: 18px; }
 
-/* ---- TL;DR hook: the one takeaway, pinned above the story ---- */
-.tldr {
-  display: flex; gap: 14px; align-items: baseline;
-  margin: 8px 0 24px; padding: 14px 18px;
+/* ---- closing summary: the resolution, after the story ---- */
+.summary {
+  display: flex; flex-direction: column; gap: 6px;
+  margin: 36px 0 0; padding: 16px 18px;
   background: var(--panel);
   border: 1px solid var(--line); border-left: 3px solid var(--accent);
   border-radius: 8px;
 }
-.tldr-tag {
+.summary-tag {
   font-family: var(--mono); font-size: 11px; letter-spacing: 1px; font-weight: 700;
-  color: var(--accent); text-transform: uppercase; flex: none; padding-top: 2px;
+  color: var(--accent); text-transform: uppercase;
 }
-.tldr-body { font-size: 16.5px; color: var(--ink); }
-.tldr-body strong { color: var(--ink); }
-
-/* ---- plain-words glossary, before the jargon arrives ---- */
-.concepts {
-  margin: 24px 0; padding: 16px 20px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-}
-.concepts h4 { margin: 0 0 10px; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
-.concepts dl { margin: 0; }
-.concept { display: grid; grid-template-columns: 150px 1fr; gap: 6px 16px; padding: 7px 0; border-top: 1px solid var(--line); }
-.concept:first-child { border-top: none; }
-.concept dt { font-weight: 600; color: var(--accent-2); font-size: 14.5px; }
-.concept dd { margin: 0; color: #374151; font-size: 14.5px; }
-@media (max-width: 760px) { .concept { grid-template-columns: 1fr; gap: 2px; } }
+.summary-body { font-size: 16px; color: var(--ink); }
 
 #lesson h3 { font-size: 20px; margin: 30px 0 6px; }
 #lesson p { margin: 12px 0; }
@@ -141,10 +127,11 @@ h2.lt { font-size: 32px; margin: 8px 0 5px; line-height: 1.14; letter-spacing: -
 .callout.aside { border-color: var(--muted); } .callout.aside .tag { color: var(--muted); }
 .callout.legacy { border-color: var(--good); } .callout.legacy .tag { color: var(--good); }
 
-/* canonical-paper link(s) under the title */
-.sources { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: -16px 0 22px; }
-.src-icon { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+/* further-reading link(s) at the end of a chapter */
+.further { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px;
+  margin: 18px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.further-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); }
 .src-link { font-size: 13px; color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--line); }
 .src-link:hover { color: var(--accent); border-color: var(--accent); }
 

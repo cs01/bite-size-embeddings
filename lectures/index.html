@@ -4,9 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lecture Atlas — the modern LM stack, mapped</title>
-  <meta name="description" content="The whole modern language-model stack on one page — Stanford CS336's 18 lectures laid out as a lifecycle map of concepts, takeaways, and quotes. Click any node for detail." />
+  <meta name="description" content="Suppose you had to build a modern language model from nothing — what would you need to know? Stanford CS336's 18 lectures, mapped as a lifecycle of concepts, takeaways, and quotes." />
   <meta name="theme-color" content="#ffffff" />
   <meta name="author" content="Chad Smith" />
+  <link rel="canonical" href="https://chadsmith.dev/lecture-atlas/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://chadsmith.dev/lecture-atlas/" />
+  <meta property="og:title" content="Lecture Atlas — the modern LM stack, mapped" />
+  <meta property="og:description" content="Suppose you had to build a modern language model from nothing — what would you need to know? Stanford CS336's 18 lectures, mapped as a lifecycle of concepts, takeaways, and quotes." />
   <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'&gt;&lt;circle cx='16' cy='16' r='10' fill='%2315803d'/&gt;&lt;/svg&gt;" />
   <style>
     :root {
@@ -94,6 +99,14 @@
     #drawer .watch:hover { text-decoration: underline; }
 
     .empty { color: var(--muted); text-align: center; padding: 50px; }
+    .outro { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line); max-width: 70ch; }
+    .outro h2 { font-size: 17px; margin: 0 0 10px; }
+    .outro p { color: var(--muted); font-size: 14.5px; margin: 0 0 12px; }
+    .sources { margin-top: 30px; }
+    .sources h2 { font-family: var(--mono); font-size: 11.5px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+    .sources ul { margin: 0; padding-left: 18px; }
+    .sources li { font-size: 13.5px; color: var(--muted); margin: 0 0 6px; }
     footer { color: var(--muted); font-size: 13px; margin-top: 50px; text-align: center; }
     footer a { color: var(--muted); }
 
@@ -106,10 +119,10 @@
 </head>
 <body>
   <main>
-    <p class="crumb"><a href="../">← all courses</a></p>
-    <div class="kicker">reference · the field on one page</div>
+    <p class="crumb"><a href="https://chadsmith.dev/">← chadsmith.dev</a></p>
+    <div class="kicker">stanford cs336 · from scratch</div>
     <h1>Lecture Atlas</h1>
-    <p class="blurb">The whole modern language-model stack, mapped as a lifecycle — from raw data and tokens to a served, aligned model. Every lecture is a node; click one for its concepts, takeaways, and the lines worth remembering.</p>
+    <p class="blurb">Suppose you had to build a modern language model from nothing — no framework, no pretrained weights, no recipe. What would you actually need to know? Stanford CS336 spends eighteen lectures answering that question, and this atlas is the map: every lecture a node on the lifecycle from raw data to a served, aligned model. Click one for its concepts, takeaways, and the lines worth remembering.</p>
     <p class="src">Distilled from <a href="https://www.youtube.com/playlist?list=PLoROMvodv4rMqXOcazWaTUHhq-yembLCV" target="_blank" rel="noopener">Stanford CS336: Language Modeling from Scratch (Spring 2025)</a>. Cards are study notes — watch the lecture for the real thing.</p>
 
     <div class="toolbar">
@@ -119,6 +132,21 @@
 
     <div id="map"></div>
     <div id="noresults" class="empty" style="display:none">No lectures match that search.</div>
+
+    <div class="outro">
+      <h2>The shape of the answer</h2>
+      <p>Building a language model from nothing turns out to mean mastering eight distinct crafts: sourcing and filtering data, choosing an architecture, respecting the memory wall of the hardware, distributing training across machines, predicting returns before you spend, measuring what you built, aligning it with post-training, and serving it cheaply enough to matter. No single lecture is the hard part — the hard part is that every stage constrains every other one. That is what the map above is for.</p>
+      <p>If you want the longer story of how the field got here, the companion course <a href="https://chadsmith.dev/how-llms-came-to-be/">How LLMs Came to Be</a> walks the history behind this stack.</p>
+    </div>
+
+    <div class="sources">
+      <h2>Further reading &amp; sources</h2>
+      <ul>
+        <li><a href="https://www.youtube.com/playlist?list=PLoROMvodv4rMqXOcazWaTUHhq-yembLCV" target="_blank" rel="noopener">CS336 lecture playlist on YouTube</a> — the full 18-lecture series these cards distill.</li>
+        <li><a href="https://stanford-cs336.github.io/spring2025/" target="_blank" rel="noopener">CS336 course site</a> — syllabus, assignments, and lecture materials from Stanford.</li>
+        <li>All lectures are from the Spring 2025 offering, taught by Tatsunori Hashimoto and Percy Liang.</li>
+      </ul>
+    </div>
 
     <footer>Built by Chad Smith · <a href="https://github.com/cs01/bite-size-embeddings">source on GitHub</a></footer>
   </main>

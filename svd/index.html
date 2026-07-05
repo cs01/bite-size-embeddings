@@ -4,6 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SVD Explorer — Learn Singular Value Decomposition</title>
+<meta name="description" content="How does Netflix guess what you'll love? An interactive walk from vectors to eigenvectors to the singular value decomposition — the pattern-finding machine behind recommendations, LSA, and image compression." />
+<link rel="canonical" href="https://chadsmith.dev/svd/" />
+<meta property="og:title" content="SVD Explorer — Learn Singular Value Decomposition" />
+<meta property="og:url" content="https://chadsmith.dev/svd/" />
+<meta property="og:type" content="article" />
 <style>
   :root {
     --bg: #ffffff; --panel: #fafaf8; --subtle: #f1f2f0; --border: #e5e7eb;
@@ -132,6 +137,15 @@
   .sr small { color: var(--muted); display: block; font-size: 12px; margin-top: 3px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sr-empty { padding: 18px; color: var(--muted); }
+  /* further reading */
+  ul.refs { margin: 0; padding: 0; list-style: none; }
+  ul.refs li { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  ul.refs li:last-child { border-bottom: none; padding-bottom: 0; }
+  ul.refs a { color: var(--accent); text-decoration: none; }
+  ul.refs a:hover { text-decoration: underline; }
+  ul.refs small { display: block; color: var(--muted); margin-top: 2px; }
+  #closing { border-top: 1px solid var(--border); margin-top: 40px; padding-top: 28px; }
+  #closing a { color: var(--accent); }
   @keyframes flashbg { 0%,100% { background: transparent; } 25% { background: #2563eb44; } }
   dl.gl dt.flash, dl.gl dd.flash { animation: flashbg 1.4s ease; border-radius: 4px; }
 </style>
@@ -140,10 +154,10 @@
 <div id="app">
   <aside id="rail">
     <div class="rail-head">
-      <a class="xlink" href="../">← all courses</a>
+      <a class="xlink" href="https://chadsmith.dev/">← chadsmith.dev</a>
       <h1>SVD Explorer</h1>
       <p class="sub">vectors → eigenvectors → SVD, built bottom-up</p>
-      <a class="xlink xback" href="../footsteps/#2">↩ back to the story — this is the math behind <b>Footsteps</b> ch.2 (LSA)</a>
+      <a class="xlink xback" href="https://chadsmith.dev/how-llms-came-to-be/">↩ back to the story — this is the math behind the LSA chapter of <b>How LLMs Came to Be</b></a>
       <button class="searchbtn" id="search-open">🔍 Search the glossary <kbd>⌘K</kbd></button>
     </div>
     <nav id="timeline">
@@ -421,7 +435,8 @@
   <!-- ===== 5 · RANK ===== -->
   <div class="panel" id="rank">
     <div class="card">
-      <h2>First — what "rank" and "energy" mean</h2>
+      <h2>The question: how many patterns is a matrix really made of?</h2>
+      <p>On Tab 0, two patterns rebuilt a 30-number table almost perfectly. That trick raises the question this tab answers: how many patterns does a matrix <i>genuinely</i> contain, and how much do you lose by dropping the rest? Two words make the answer precise.</p>
       <p><b style="color:var(--accent)">Rank</b> = the number of <b>genuinely independent patterns</b> in a matrix — i.e. how many singular values aren't ≈ 0. A table stuffed with numbers that's really "2 tastes + noise" has <b>rank 2</b>. Low rank = lots of redundancy = squeezable. <b>How to find it:</b> run SVD and count the σ's that aren't tiny — look for the cliff in the bars below.</p>
       <p><b class="sc">Energy</b> — "how much of the matrix" your kept patterns explain. Keep the patterns holding 99% of the energy and you toss only 1% (the noise) for a big size cut. <b>That one trade-off is rank, energy, compression, and denoising — all the same move.</b></p>
     </div>
@@ -540,6 +555,23 @@
       </dl>
     </div>
   </div>
+
+  <!-- ===== CLOSING — appears below every tab ===== -->
+  <div id="closing">
+    <div class="card">
+      <h2>Where this landed</h2>
+      <p>This page opened with blanks in a ratings table, and every tab since has been the same move in a different costume: hand a big messy matrix to SVD, keep the strongest patterns, throw away the rest. In 1990, a group at Bellcore led by Scott Deerwester ran exactly that move on a word-by-document count matrix and noticed something remarkable — the compressed coordinates captured <b>meaning</b>. Words used in similar contexts landed near each other, even when they never appeared in the same document. They called it Latent Semantic Analysis, and its coordinates were, in everything but name, the first word embeddings.</p>
+      <p>That is the thread that runs forward to today: represent a thing — a movie, a person, a word — as its coordinates along a few learned pattern axes, and let geometry do the reasoning. word2vec, GloVe, and the embedding layers inside modern LLMs all stand on that idea. The full story is told in <a href="https://chadsmith.dev/how-llms-came-to-be/">How LLMs Came to Be</a> — this page is the math underneath its LSA chapter.</p>
+    </div>
+    <div class="card">
+      <h2>Further reading</h2>
+      <ul class="refs">
+        <li><a href="https://doi.org/10.1007/BF02288367">Eckart &amp; Young (1936) — “The approximation of one matrix by another of lower rank”</a><small>Psychometrika 1(3), 211–218. The theorem behind Tab 5’s “best possible” claim: truncated SVD is provably the optimal rank-k approximation.</small></li>
+        <li><a href="https://doi.org/10.1002/(SICI)1097-4571(199009)41:6%3C391::AID-ASI1%3E3.0.CO;2-9">Deerwester, Dumais, Furnas, Landauer &amp; Harshman (1990) — “Indexing by Latent Semantic Analysis”</a><small>Journal of the American Society for Information Science 41(6), 391–407. The paper that pointed SVD at language and found meaning in the pattern axes.</small></li>
+        <li><a href="https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/">Gilbert Strang — MIT 18.06 Linear Algebra (Spring 2010), MIT OpenCourseWare</a><small>Lecture 29, “Singular Value Decomposition,” is the classic chalkboard treatment of everything on this page — full video lectures, free.</small></li>
+      </ul>
+    </div>
+  </div>
   </div>
   </main>
 </div>
@@ -553,7 +585,7 @@
 
 <script>
 // ---------- tabs ----------
-// `#<tab>` deep-links a panel (e.g. svd/#idea), so Footsteps can link straight
+// `#<tab>` deep-links a panel (e.g. svd/#idea), so How LLMs Came to Be can link straight
 // to the relevant section and tabs are shareable.
 function selectTab(name) {
   const tab = document.querySelector(`.tab[data-tab="${name}"]`);

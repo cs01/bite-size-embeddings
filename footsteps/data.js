@@ -9,11 +9,7 @@ const LESSONS = [
     title: "Meaning is company",
     people: "Two linguists, decades before computers could use the idea",
     source: { label: "Harris 1954 · “Distributional Structure”", url: "https://www.tandfonline.com/doi/pdf/10.1080/00437956.1954.11659520" },
-    tldr: "Two linguists in the 1950s planted the seed of all modern AI: <strong>you can work out what a word means just by watching the company it keeps</strong> — no dictionary, no human, only patterns in text.",
-    concepts: [
-      { t: "Distributional hypothesis", d: "Words that turn up in the same surroundings tend to mean similar things. Meaning ≈ the company a word keeps." },
-      { t: "Co-occurrence", d: "Which words appear near each other. The raw, countable signal a machine can actually measure." },
-    ],
+    summary: "What came out the other side: meaning, redefined as something a machine can count. A word is characterized by the contexts it appears in — no dictionary, no human judge, only patterns in text. The bet was placed decades before any computer could act on it.",
     body: [
       { p: "You want a machine to understand language. First question, and it's a wall: <em>what is the meaning of a word, in a form a machine could hold?</em> A dictionary defines words with more words — circular. Meaning seems to live in human heads, not on paper.", lead: true },
       { desk: "How do you represent <em>meaning</em> as something mechanical — countable, comparable — without a human in the loop?" },
@@ -21,7 +17,7 @@ const LESSONS = [
       { eq: '"You shall know a word by the company it keeps." — Firth, 1957' },
       { leap: "Meaning need not be defined — it can be <em>observed</em>. If <code>dog</code> and <code>cat</code> show up near the same words (<code>feed</code>, <code>vet</code>, <code>pet</code>), the data alone says they're related. No semantics required, just statistics of context." },
       { widget: "distrib" },
-      { p: "This is the seed of <strong>everything</strong> that follows — word2vec, BERT, the embeddings powering search today. Sixty years before they existed, the bet was placed: <em>meaning = patterns of co-occurrence</em>." },
+      { p: "This is the seed of <strong>everything</strong> that follows — word2vec, BERT, the embeddings powering search today. Sixty years before they existed, the bet was placed: <em>meaning = patterns of co-occurrence</em> — which words appear near which, the one signal a machine can actually count." },
       { legacy: "Every embedding model you'll meet is a machine for cashing out this one sentence. They differ only in how cleverly they count the company a word keeps." },
     ],
     quiz: [
@@ -35,12 +31,7 @@ const LESSONS = [
     title: "The first vectors",
     people: "A search-engine team — Latent Semantic Analysis (LSA)",
     source: { label: "Deerwester et al. 1990 · “Indexing by LSA”", url: "https://doi.org/10.1002/(SICI)1097-4571(199009)41:6%3C391::AID-ASI1%3E3.0.CO;2-9" },
-    tldr: "To match <code>car</code> with <code>automobile</code>, a 1990 search method turned every word into a list of numbers — a <strong>vector</strong> — so 'similar meaning' became 'points sitting close together in space.' The embedding was born.",
-    concepts: [
-      { t: "Vector / embedding", d: "A word turned into a list of numbers (coordinates), so its meaning becomes a location in space." },
-      { t: "Cosine similarity", d: "Measures the angle between two vectors. Small angle ⇒ they point the same way ⇒ similar meaning." },
-      { t: "SVD", d: "A linear-algebra compression trick that squeezes a giant word×document table down to a few hundred meaningful dimensions." },
-    ],
+    summary: "The synonymy problem fell to counting plus linear algebra: turn every word into a list of numbers, compress the table with SVD, and 'similar meaning' becomes 'small angle between points in space.' The embedding — and cosine similarity as its ruler — left this chapter finished, decades before GPT.",
     body: [
       { p: "Fast-forward to information retrieval. You're building search. A user types <code>car</code>; a perfect document says <code>automobile</code> and never once says <code>car</code>. Keyword matching returns nothing. This is the <strong>synonymy problem</strong>, and it's killing recall.", lead: true },
       { desk: "Keyword search is literal. <code>car</code> ≠ <code>automobile</code> to a string matcher, even though they mean the same thing. How do you match on <em>meaning</em>?" },
@@ -72,16 +63,11 @@ const LESSONS = [
     title: "Let the network learn the vectors",
     people: "A Montreal research team — A Neural Probabilistic Language Model",
     source: { label: "Bengio et al. 2003 · “A Neural Probabilistic Language Model”", url: "https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf" },
-    tldr: "Instead of <em>counting</em> word vectors from a fixed table, a 2003 paper let a neural network <strong>learn</strong> them by trial and error — turning the vector from a finished measurement into a living, trainable building block. That one shift is the road to GPT.",
-    concepts: [
-      { t: "Neural network", d: "A big pile of adjustable numbers ('weights') that gets tuned, by trial and error, to do better at a task." },
-      { t: "Learned vs counted", d: "Counting measures the data once and stops. Learning keeps nudging the numbers until predictions improve." },
-      { t: "Self-supervised", d: "Training with no human labels — the text quizzes itself by hiding its own next word." },
-    ],
+    summary: "The vector stopped being a measurement and became a parameter — something a network learns by trial and error while predicting text. That reframing, representations as trainable building blocks produced as a byproduct of a prediction task, is the template every later system reuses.",
     body: [
       { p: "LSA gave us vectors — but for <em>search</em>: which documents resemble each other. Predicting <strong>the next word</strong> in a sentence was a separate world, and there the reigning tool was still pure counting: the <strong>n-gram</strong>. Count how often 'the cat sat on the' is followed by each word. It works — until it doesn't. Most 5-word sequences never appear in your data even once. The counts are zero. This is the <strong>curse of dimensionality</strong>.", lead: true },
       { desk: "n-grams memorize exact word sequences. They can't generalize: seeing 'the cat is walking' teaches them <em>nothing</em> about 'a dog was running,' even though it's the same shape of sentence." },
-      { p: "The move: stop treating words as atomic symbols (just an index in a vocabulary). Give each word a <strong>learned vector</strong>, and train a neural network to predict the next word from those vectors. Crucially — the vectors are <em>parameters</em>, knobs the training process shapes." },
+      { p: "The move: stop treating words as atomic symbols (just an index in a vocabulary). Give each word a <strong>learned vector</strong>, and train a <strong>neural network</strong> — a big pile of adjustable numbers ('weights'), tuned by trial and error to do better at a task — to predict the next word from those vectors. Crucially, the word vectors themselves are among those adjustable numbers: <em>parameters</em>, knobs the training process shapes." },
       { leap: "If <code>cat</code> and <code>dog</code> get similar vectors (because predicting their neighbors works better that way), then a sentence about cats <strong>automatically</strong> informs the model about dogs. The embedding is no longer counted — it's <em>learned</em>, as a side effect of doing a task." },
 
       { h: "“But LSA already grouped cat and dog — so what's actually new?”" },
@@ -90,7 +76,7 @@ const LESSONS = [
       { widget: "trainvec" },
       { leap: "Why that reframing is everything: a counted table is a dead artifact — a map drawn from a survey, finished. A <em>learned</em> vector is a <strong>living building block</strong> you can stack inside a bigger network and keep training. Embeddings stop being preprocessing and become the <strong>first layer of a trainable model</strong>. A counted table could never be 'layer 1 of a deep net'; a learned vector could. <em>That</em> is the road to BERT and GPT." },
       { aside: "The analogy: counting <strong>surveys the city and hands you a finished map</strong>. Learning <strong>gives a robot a goal and lets it draw — and redraw — its own map</strong>, tuned for the task. And you can bolt more robots on top." },
-      { aside: "This is the template for the next 20 years: <em>pick a self-supervised prediction task, and useful representations fall out as a byproduct.</em> word2vec, BERT, GPT — all variations on this." },
+      { aside: "Notice there's no human labeling anywhere — the text quizzes itself by hiding its own next word. Training like this is called <strong>self-supervised</strong>, and it's the template for the next 20 years: <em>pick a self-supervised prediction task, and useful representations fall out as a byproduct.</em> word2vec, BERT, GPT — all variations on this." },
       { legacy: "This work fused the two threads: distributional meaning (the 'company a word keeps') + neural learning. But it was slow and heavy for 2003 hardware. The world needed someone to make it cheap." },
     ],
     quiz: [
@@ -104,11 +90,7 @@ const LESSONS = [
     title: "king − man + woman = queen",
     people: "A Google team — word2vec",
     source: { label: "Mikolov et al. 2013 · “Efficient Estimation of Word Representations” (word2vec)", url: "https://arxiv.org/abs/1301.3781" },
-    tldr: "By 2013 a stripped-down, lightning-fast model learned word vectors so good you could do <strong>arithmetic</strong> on meaning: <code>king − man + woman</code> lands on <code>queen</code>. Nobody built that in — it emerged from predicting neighbours.",
-    concepts: [
-      { t: "Skip-gram", d: "The training game: given a word, predict its neighbours. Cheap enough to run on billions of words." },
-      { t: "Vector arithmetic", d: "Adding and subtracting word vectors moves you along directions of meaning — gender, plurality, and more." },
-    ],
+    summary: "Stripping the 2003 model down to a bare 'predict your neighbours' game made word vectors cheap enough to train on billions of words — and revealed they carried linear structure: directions for gender, plurality, royalty that nobody asked for. Meaning-as-geometry went from theory to something you could do arithmetic on.",
     body: [
       { p: "The 2003 learned-vector model worked but was expensive. The question now: how <em>simple</em> can we make this and still get great word vectors? The answer stripped the network almost to nothing.", lead: true },
       { desk: "Learned embeddings were powerful but slow to train. Could you get them cheaply enough to run on billions of words?" },
@@ -130,17 +112,13 @@ const LESSONS = [
     year: "2013–17",
     title: "The flaw: one word, one vector",
     people: "The problem everyone now faced",
-    tldr: "word2vec gave each word <strong>exactly one</strong> vector — so <code>bank</code> (river) and <code>bank</code> (money) were forced to share it, blurred into something that fits neither sentence. Curing this 'context blindness' is what the whole rest of the story is about.",
-    concepts: [
-      { t: "Static embedding", d: "One fixed vector per word, the same in every sentence. Fast — but blind to context." },
-      { t: "Polysemy", d: "One spelling, many meanings (river 'bank' vs money 'bank'). Exactly what a static vector can't handle." },
-    ],
+    summary: "The diagnosis was written: a static embedding — one fixed vector per word, identical in every sentence — cannot represent a word whose meaning shifts with context. And the cure had a precise shape before anyone built it: let each word read its neighbours and update itself.",
     body: [
       { p: "word2vec gives each word <strong>exactly one</strong> vector. Fixed. Forever. Now read these two sentences:", lead: true },
       { eq: "I sat on the river <b>bank</b>.\nI deposited cash at the <b>bank</b>." },
       { desk: "<code>bank</code> has one vector — but two unrelated meanings. A <em>static</em> embedding must average them into a meaningless blur. It literally cannot represent that <code>bank</code> means different things in different sentences." },
       { widget: "polysemy" },
-      { p: "This is the <strong>polysemy / context problem</strong>. Static embeddings are context-blind. They know a word's <em>average</em> company across all of English, but not what it means <em>right here, in this sentence</em>." },
+      { p: "This is the <strong>polysemy problem</strong> — one spelling, many unrelated meanings. Static embeddings are context-blind. They know a word's <em>average</em> company across all of English, but not what it means <em>right here, in this sentence</em>." },
       { leap: "The needed idea: an embedding should be a function of the <strong>whole sentence</strong>, not a lookup. <code>bank</code>'s vector should <em>change</em> depending on whether <code>river</code> or <code>cash</code> sits nearby. We need words to <em>read their neighbors</em> and update themselves." },
       { aside: "Hold that phrase — 'read their neighbors and update.' That is <strong>attention</strong>, a year early. The problem is now perfectly shaped for the solution." },
       { legacy: "Meanwhile, a totally separate field — machine translation — was about to invent exactly this mechanism for a totally different reason. They didn't know they were solving the embedding problem too." },
@@ -156,12 +134,7 @@ const LESSONS = [
     title: "Attention is born (in translation)",
     people: "A translation research team — Jointly Learning to Align and Translate",
     source: { label: "Bahdanau et al. 2014 · “Neural Machine Translation by Jointly Learning to Align and Translate”", url: "https://arxiv.org/abs/1409.0473" },
-    tldr: "Translating long sentences kept breaking because the model crushed the whole input into one tiny summary. The fix — <strong>attention</strong> — let it look back and weigh which input words matter right now. This is the seed of every modern AI model.",
-    concepts: [
-      { t: "Encoder–decoder", d: "One network reads the input sentence; a second writes the output, word by word." },
-      { t: "Attention", d: "Instead of one fixed summary, the model looks at all input words and decides how much to focus on each, every step." },
-      { t: "Attention weights (α)", d: "The focus amounts. They add up to 1 and say where to look right now." },
-    ],
+    summary: "Translation's bottleneck broke when the decoder was allowed to look back at every source word and learn how much each one matters right now. Those learned focus weights — attention — turned out to be the exact 'read your neighbours' operation the embedding problem needed, invented in another room for a different reason.",
     body: [
       { p: "Different room, different problem. Neural translation used an <strong>encoder–decoder</strong>: an RNN reads the whole source sentence and crushes it into a <em>single fixed vector</em>; a second RNN expands that vector into the translation.", lead: true },
       { desk: "The entire source sentence — 5 words or 50 — must fit in <strong>one fixed-length vector</strong>. For long sentences this bottleneck strangles the model; by the time it finishes reading, the start has decayed away. Translation quality fell off a cliff with length." },
@@ -184,17 +157,12 @@ const LESSONS = [
     title: "Attention is all you need",
     people: "A Google team — the Transformer",
     source: { label: "Vaswani et al. 2017 · “Attention Is All You Need”", url: "https://arxiv.org/abs/1706.03762" },
-    tldr: "The bold 2017 bet: <strong>throw away the slow step-by-step network and keep only attention.</strong> Let every word read every other word at once. That's the Transformer — the engine inside BERT, GPT, and Claude.",
-    concepts: [
-      { t: "Self-attention", d: "Every word looks at every other word in the sentence and pulls in what's relevant — rewriting itself from context." },
-      { t: "Query / Key / Value", d: "Each word asks a question (Query), advertises a label (Key), and offers content (Value). Good Query–Key matches decide the blend of Values." },
-      { t: "Causal mask", d: "Hiding the future words so a text generator can't peek at what it's supposed to predict." },
-    ],
+    summary: "The RNN turned out to be scaffolding, not structure. Keep only attention — every word matching its Query against every Key and blending the Values, in parallel — and you get the Transformer: context at any distance, one hop, at GPU speed. Every modern model, BERT to Claude, runs on this.",
     body: [
       { p: "RNNs had a second, deeper problem: they're <strong>sequential</strong>. Word 50 can't be processed until words 1–49 are done. On modern GPUs — which crave parallelism — that's torture. And long-range dependencies still decayed through the chain.", lead: true },
       { desk: "RNN + attention worked, but the RNN forced sequential computation (slow, unparallelizable) and still struggled to connect distant words. What if the RNN was the <em>problem</em>, not the scaffold?" },
       { p: "The audacious bet, right there in the title: <strong>throw the RNN away entirely.</strong> Keep only attention. Let every word attend to <em>every other word directly</em>, in parallel, in one step. They called it <strong>self-attention</strong>." },
-      { p: "The machinery is three projections of each word — <strong>Query, Key, Value</strong>. A word's Query is matched against every word's Key to get attention weights; those weights pull a blend of Values:" },
+      { p: "The machinery is three projections of each word — <strong>Query, Key, Value</strong>: the word asks a question (Query), advertises what it offers (Key), and carries content (Value). A word's Query is matched against every word's Key to get attention weights; those weights pull a blend of Values:" },
       { eq: "Attention(Q,K,V) = softmax( Q·Kᵀ / √d ) · V" },
       { leap: "Now <code>bank</code> emits a Query like 'what disambiguates me?', matches strongly on the Keys of <code>river</code> or <code>cash</code>, and pulls their Values into its own representation. <strong>The word literally rewrites itself from its neighbors</strong> — fully parallel, any distance, one hop. This is the contextual embedding the 2014 chapter demanded, finally built clean." },
       { h: "See it: every word reading every word" },
@@ -216,12 +184,7 @@ const LESSONS = [
     title: "BERT: context, finally",
     people: "A Google team — BERT",
     source: { label: "Devlin et al. 2018 · “BERT”", url: "https://arxiv.org/abs/1810.04805" },
-    tldr: "Hide some words in a sentence and train a model to guess them <strong>from both sides at once</strong>. The payoff: a word finally gets a <em>different</em> vector in every sentence — the context blindness from the 2013 chapter, cured.",
-    concepts: [
-      { t: "Masked language modeling", d: "The training game: blank out ~15% of the words, make the model predict them from the surrounding context." },
-      { t: "Bidirectional", d: "Reads left and right context together — great for understanding (but it can't generate text)." },
-      { t: "Contextual embedding", d: "A word's vector now depends on its sentence: 'river bank' ≠ 'cash bank'." },
-    ],
+    summary: "Fill-in-the-blank training forced each word's vector to absorb its whole sentence, both directions at once. Out the other side came contextual embeddings — 'river bank' and 'cash bank' finally distinct — and the lookup table became a function.",
     body: [
       { p: "Now take the Transformer encoder and aim it straight at the embedding problem. BERT's training task: hide ~15% of the words and make the model <strong>predict the missing ones from both sides</strong> (masked language modeling).", lead: true },
       { desk: "We have self-attention, but how do we train it to produce great <em>general-purpose</em> contextual embeddings, not just translations?" },
@@ -241,16 +204,11 @@ const LESSONS = [
     title: "Sentence vectors — and your search bar",
     people: "Sentence-BERT · then the embedding-model era",
     source: { label: "Reimers & Gurevych 2019 · “Sentence-BERT”", url: "https://arxiv.org/abs/1908.10084" },
-    tldr: "Search needs <strong>one</strong> vector per sentence, not one per word. A 2019 tweak averaged a sentence into a single point and trained similar sentences to sit close together — which is exactly what powers your search bar today.",
-    concepts: [
-      { t: "Mean pooling", d: "Average all the word vectors into one vector that stands for the whole sentence." },
-      { t: "Contrastive training", d: "Pull similar texts together and push different ones apart in vector space." },
-      { t: "Sentence embedding", d: "One vector for an entire sentence or chunk, comparable to others by cosine." },
-    ],
+    summary: "Contrastive training plus mean pooling collapsed a whole sentence into a single comparable point — cheap enough to index millions of chunks and rank them by cosine. Semantic search as you use it today is this chapter's output, running the entire history underneath.",
     body: [
       { p: "BERT embeds <em>words in context</em>, but search needs a single vector for a whole <strong>sentence or document</strong> — and BERT was painfully slow at comparing pairs (you'd have to re-run it on every pair). Useless at the scale of a codebase.", lead: true },
       { desk: "How do you get <em>one</em> good vector per sentence/chunk, fast enough to index millions and compare by cosine?" },
-      { leap: "Sentence-BERT trains BERT with a <strong>siamese / contrastive</strong> objective: push similar texts' vectors together, dissimilar ones apart, then mean-pool into a single fixed vector. Now a sentence is <em>one</em> point in space — and similarity is back to a plain cosine, like LSA in 1990, but vastly smarter." },
+      { leap: "Sentence-BERT trains BERT with a <strong>siamese / contrastive</strong> objective: push similar texts' vectors together, dissimilar ones apart, then <strong>mean-pool</strong> — average all the word vectors into one that stands for the whole sentence. Now a sentence is <em>one</em> point in space — and similarity is back to a plain cosine, like LSA in 1990, but vastly smarter." },
       { widget: "pool" },
       { p: "This is the lineage that ends at your search bar. A model like <code>all-MiniLM-L6-v2</code> — a common pick for code and text search — is a small, distilled, contrastively-trained Sentence-BERT. Six self-attention layers, 384-dim output, mean-pooled, unit-normalized." },
       { eq: "your query ─▶ [6× self-attention] ─▶ mean-pool ─▶ 384-d vector\n                                              │\n   code chunk ─▶ [same model] ─▶ 384-d vector ┘\n                       similarity = cosine(query, chunk)" },
@@ -269,11 +227,7 @@ const LESSONS = [
     title: "The Transformer's two twins",
     people: "Encoder vs Decoder — one architecture, two jobs",
     source: { label: "Vaswani et al. 2017 · “Attention Is All You Need” (both halves)", url: "https://arxiv.org/abs/1706.03762" },
-    tldr: "The Transformer always had <strong>two halves</strong>. We've been using the 'understand' half (encoder → embeddings). The other half — the 'write' half (decoder) — is what becomes ChatGPT and Claude. Same parts, different job.",
-    concepts: [
-      { t: "Encoder", d: "Reads a whole input at once and outputs understanding (vectors). BERT's half." },
-      { t: "Decoder", d: "Writes new text one word at a time, left to right. GPT's half." },
-    ],
+    summary: "The Transformer shipped with two halves, and the story so far cashed only one. Encoder: read everything at once, output understanding — BERT's half. Decoder: write new text left to right — GPT's half. Everything called an LLM is the second twin: the same attention machinery, aimed at generation.",
     body: [
       { p: "Everything so far walked <strong>one</strong> road: take text, <em>understand</em> it, output a vector. That's the <strong>encoder</strong> — BERT's branch. But the original Transformer paper had <em>two</em> halves, and we only opened one.", lead: true },
       { desk: "An encoder reads a whole sentence at once and outputs <em>understanding</em> (vectors). But how do you make a Transformer <strong>write</strong> — produce new text, word by word?" },
@@ -294,12 +248,7 @@ const LESSONS = [
     title: "What is a word, anyway?",
     people: "BPE — subword tokenization",
     source: { label: "Sennrich et al. 2016 · “Neural Machine Translation of Rare Words with Subword Units”", url: "https://arxiv.org/abs/1508.07909" },
-    tldr: "A model needs a fixed, finite vocabulary, but language is endless. The fix: chop text into reusable <strong>tokens</strong> — common words stay whole, rare ones split into pieces — so nothing is ever truly 'unknown.'",
-    concepts: [
-      { t: "Token", d: "The real unit a model reads — sometimes a whole word, sometimes a chunk, sometimes a single letter." },
-      { t: "Byte-Pair Encoding (BPE)", d: "Builds the vocabulary by repeatedly merging the most frequent adjacent pair of symbols." },
-      { t: "Out-of-vocabulary", d: "A word the model has never seen. BPE makes this impossible — worst case it falls back to single characters." },
-    ],
+    summary: "The unit problem settled on a compromise learned from the data itself: the token. A finite vocabulary of frequency-merged chunks, where common words stay whole, rare strings shatter into familiar pieces, and nothing is ever truly unknown. Every model in this story reads tokens, not words.",
     body: [
       { p: "We've said 'word' this whole time. But a machine needs a <em>fixed, finite</em> vocabulary — and language refuses to cooperate. New slang, typos, <code>antidisestablishmentarianism</code>, emoji, source code, Chinese. A list of every possible word is endless; a small list chokes on the first thing it hasn't seen.", lead: true },
       { desk: "Whole-word vocab → millions of entries and still dies on any unseen word (an <code>UNK</code> token). One-character vocab → tiny, but sequences get punishingly long and each symbol means almost nothing. Neither extreme works." },
@@ -322,12 +271,7 @@ const LESSONS = [
     title: "Predict the next token. Forever.",
     people: "GPT — the autoregressive idea",
     source: { label: "Radford et al. 2018 · “Improving Language Understanding by Generative Pre-Training” (GPT)", url: "https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf" },
-    tldr: "How do you train a thing to write? Almost embarrassingly simply: <strong>given the text so far, guess the next word</strong> — then loop. The internet is the answer key. That loop is the entire engine of ChatGPT and Claude.",
-    concepts: [
-      { t: "Next-token prediction", d: "The whole training task: predict the next chunk of text from everything before it." },
-      { t: "Autoregression", d: "Predict → append → feed it back → predict again. How text actually gets generated." },
-      { t: "Causal attention", d: "Each word may only look at earlier words, so it can't cheat by seeing the answer it must predict." },
-    ],
+    summary: "Writing reduced to a loop: predict the next token from everything so far, append it, feed it back, repeat — with causal attention keeping the model honest about a future it hasn't written yet. The internet became the answer key, and that loop is, mechanically, the entire engine of GPT and Claude.",
     body: [
       { p: "How do you train a network to <em>write</em>? The task is almost insultingly simple: <strong>given the text so far, predict the next word.</strong> That's the entire training objective.", lead: true },
       { desk: "Writing seems to need creativity, planning, knowledge. How do you turn that into a trainable task with a clear right answer?" },
@@ -354,12 +298,7 @@ const LESSONS = [
       { label: "Kaplan et al. 2020 · “Scaling Laws for Neural Language Models”", url: "https://arxiv.org/abs/2001.08361" },
       { label: "Hoffmann et al. 2022 · “Chinchilla”", url: "https://arxiv.org/abs/2203.15556" },
     ],
-    tldr: "The lazy move that worked: <strong>don't change the recipe, just make it massively bigger.</strong> Past a certain size, skills nobody trained for — math, code, reasoning — simply appear. But only if you feed it enough data to match.",
-    concepts: [
-      { t: "Scaling laws", d: "Performance improves predictably as you add parameters, data, and compute." },
-      { t: "Emergence", d: "Skills that switch on abruptly at large scale, never explicitly trained for." },
-      { t: "Chinchilla rule", d: "For a fixed compute budget, grow model and data together — about 20 training tokens per parameter. Many early giants were data-starved." },
-    ],
+    summary: "Scale itself was the discovery: performance climbs predictably with parameters, data, and compute — and past certain sizes, skills nobody trained for switch on. Predicting text well enough forces a model of the world. Chinchilla added the fine print: grow data with the model, about 20 tokens per parameter, or the giant starves.",
     body: [
       { p: "Early next-token models were mediocre. The team tried something almost lazy: don't change the recipe — just <strong>scale it</strong>. More parameters, more text, more compute. GPT-1 → GPT-2 → GPT-3 (175 <em>billion</em> parameters), same idea each time, much bigger.", lead: true },
       { desk: "Next-token prediction worked but felt dumb. Would a fundamentally simple objective ever produce something smart — or did we need a cleverer architecture?" },
@@ -392,12 +331,7 @@ const LESSONS = [
     title: "From autocomplete to assistant",
     people: "InstructGPT / RLHF → ChatGPT, Claude",
     source: { label: "Ouyang et al. 2022 · “Training language models to follow instructions with human feedback” (InstructGPT)", url: "https://arxiv.org/abs/2203.02155" },
-    tldr: "A raw predictor just <em>continues</em> text — ask it a question and it might fire back more questions. Showing humans several answers to rank, then steering the model toward the winners (<strong>RLHF</strong>), is what turned autocomplete into an assistant.",
-    concepts: [
-      { t: "Instruction tuning", d: "Fine-tune on (instruction → good answer) examples, so the model learns to actually respond when asked." },
-      { t: "RLHF", d: "Reinforcement Learning from Human Feedback: humans rank answers, a reward model copies their taste, the LLM is tuned to score high." },
-      { t: "Reward model", d: "A model that predicts which answer a human would prefer — the stand-in judge during training." },
-    ],
+    summary: "A raw predictor became an assistant through two steering steps: instruction tuning to teach the format of answering, then RLHF to tune outputs toward what humans actually prefer. ChatGPT and Claude are that recipe — the same next-token engine underneath, now aimed.",
     body: [
       { p: "Raw GPT-3 just <em>continues</em> text. Ask it 'What is the capital of France?' and it might reply 'What is the capital of Germany? What is the capital of Spain?' — faithfully continuing the <em>pattern</em> instead of answering. It's an autocomplete, not an assistant.", lead: true },
       { desk: "A giant next-token predictor knows a ton — but it doesn't <em>follow instructions</em> or stay helpful/honest. How do you steer it?" },
@@ -422,12 +356,7 @@ const LESSONS = [
     title: "Teaching it to think",
     people: "o1 · DeepSeek-R1 — reasoning & RLVR",
     source: { label: "DeepSeek-AI 2025 · “DeepSeek-R1: Incentivizing Reasoning via RL”", url: "https://arxiv.org/abs/2501.12948" },
-    tldr: "Hand a model a hard problem and it blurts an answer. The next leap: reward only <strong>verified-correct</strong> answers, give it room to think, and it teaches <em>itself</em> to reason — scratch work, dead ends, backtracking and all.",
-    concepts: [
-      { t: "RLVR", d: "Reinforcement Learning from Verifiable Rewards — the reward is objective (tests pass, the math checks), not a human opinion." },
-      { t: "Chain of thought", d: "The model writes out its working before the final answer; more thinking tokens → better results." },
-      { t: "Test-time compute", d: "A new dial: spend more compute thinking at answer-time, separate from how long you trained." },
-    ],
+    summary: "Swap the human judge for a verifiable one — did the tests pass, does the math check — and give the model room to write out its working, and reasoning emerges on its own: scratch work, dead ends, backtracking and all. Seventy years of one idea, squeezed until it thinks.",
     body: [
       { p: "RLHF made models <em>helpful</em>, but hand one a hard math or coding problem and even ChatGPT would blurt out an answer — often wrong. It had no room to <em>work</em>. The next leap: let the model think before it speaks.", lead: true },
       { desk: "Human feedback teaches style and preference. But for math or code, 'which answer do you <em>like</em> better?' is the wrong question — there's a <strong>right answer</strong>. How do you train on that?" },
