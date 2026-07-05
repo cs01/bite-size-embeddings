@@ -1,7 +1,9 @@
 // App logic: render the journey, drive navigation, score quizzes, persist
 // progress in localStorage, and power the two interactive widgets.
 
-const KEY = "footsteps.progress.v1";
+const KEY = "how-llms-came-to-be.progress.v1";
+// pre-rename visitors have progress under the old key; fall back once, save() rewrites under KEY
+const LEGACY_KEY = "footsteps.progress.v1";
 let state = load();
 // A `#<n>` hash (1-based lesson number) deep-links a specific chapter and wins
 // over saved progress, so shared / cross-site links (e.g. from svd-explorer)
@@ -16,7 +18,7 @@ let current = (() => {
 })();
 
 function load() {
-  try { return JSON.parse(localStorage.getItem(KEY)) || { done: {}, last: 0 }; }
+  try { return JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY)) || { done: {}, last: 0 }; }
   catch { return { done: {}, last: 0 }; }
 }
 function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
