@@ -71,14 +71,6 @@ body {
 /* ---- stage ---- */
 #stage { display: flex; flex-direction: column; overflow: hidden; }
 
-/* ---- header: plain title bar, no decoration ---- */
-#hero {
-  flex: none; padding: 18px 6vw;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
-}
-.hl-title { font-weight: 700; font-size: 17px; letter-spacing: -0.2px; color: var(--ink); }
-.hl-sub { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; }
 #lesson { overflow-y: auto; padding: 48px 6vw; flex: 1; }
 /* hold every block to one reading-measure column (~70ch), flush-left. NOT
    margin:auto centering — p/h3/h2 carry their own `margin: x 0` which beats the

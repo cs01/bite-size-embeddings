@@ -6,7 +6,7 @@
 const LESSONS = [
   {
     year: "1950s",
-    title: "Meaning is company",
+    title: "What is meaning, to a machine?",
     people: "Two linguists, decades before computers could use the idea",
     source: { label: "Harris 1954 · “Distributional Structure”", url: "https://www.tandfonline.com/doi/pdf/10.1080/00437956.1954.11659520" },
     summary: "What came out the other side: meaning, redefined as something a machine can count. A word is characterized by the contexts it appears in — no dictionary, no human judge, only patterns in text. The bet was placed decades before any computer could act on it.",
@@ -28,7 +28,7 @@ const LESSONS = [
 
   {
     year: "1990",
-    title: "The first vectors",
+    title: "Search can't see synonyms",
     people: "A search-engine team — Latent Semantic Analysis (LSA)",
     source: { label: "Deerwester et al. 1990 · “Indexing by LSA”", url: "https://doi.org/10.1002/(SICI)1097-4571(199009)41:6%3C391::AID-ASI1%3E3.0.CO;2-9" },
     summary: "The synonymy problem fell to counting plus linear algebra: turn every word into a list of numbers, compress the table with SVD, and 'similar meaning' becomes 'small angle between points in space.' The embedding — and cosine similarity as its ruler — left this chapter finished, decades before GPT.",
@@ -60,7 +60,7 @@ const LESSONS = [
 
   {
     year: "2003",
-    title: "Let the network learn the vectors",
+    title: "Counting can't generalize",
     people: "A Montreal research team — A Neural Probabilistic Language Model",
     source: { label: "Bengio et al. 2003 · “A Neural Probabilistic Language Model”", url: "https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf" },
     summary: "The vector stopped being a measurement and became a parameter — something a network learns by trial and error while predicting text. That reframing, representations as trainable building blocks produced as a byproduct of a prediction task, is the template every later system reuses.",
@@ -87,7 +87,7 @@ const LESSONS = [
 
   {
     year: "2013",
-    title: "king − man + woman = queen",
+    title: "Good vectors cost too much",
     people: "A Google team — word2vec",
     source: { label: "Mikolov et al. 2013 · “Efficient Estimation of Word Representations” (word2vec)", url: "https://arxiv.org/abs/1301.3781" },
     summary: "Stripping the 2003 model down to a bare 'predict your neighbours' game made word vectors cheap enough to train on billions of words — and revealed they carried linear structure: directions for gender, plurality, royalty that nobody asked for. Meaning-as-geometry went from theory to something you could do arithmetic on.",
@@ -110,7 +110,7 @@ const LESSONS = [
 
   {
     year: "2013–17",
-    title: "The flaw: one word, one vector",
+    title: "One vector can't mean two things",
     people: "The problem everyone now faced",
     summary: "The diagnosis was written: a static embedding — one fixed vector per word, identical in every sentence — cannot represent a word whose meaning shifts with context. And the cure had a precise shape before anyone built it: let each word read its neighbours and update itself.",
     body: [
@@ -131,7 +131,7 @@ const LESSONS = [
 
   {
     year: "2014",
-    title: "Attention is born (in translation)",
+    title: "Translation chokes on one fixed vector",
     people: "A translation research team — Jointly Learning to Align and Translate",
     source: { label: "Bahdanau et al. 2014 · “Neural Machine Translation by Jointly Learning to Align and Translate”", url: "https://arxiv.org/abs/1409.0473" },
     summary: "Translation's bottleneck broke when the decoder was allowed to look back at every source word and learn how much each one matters right now. Those learned focus weights — attention — turned out to be the exact 'read your neighbours' operation the embedding problem needed, invented in another room for a different reason.",
@@ -154,7 +154,7 @@ const LESSONS = [
 
   {
     year: "2017",
-    title: "Attention is all you need",
+    title: "What if the RNN is the problem?",
     people: "A Google team — the Transformer",
     source: { label: "Vaswani et al. 2017 · “Attention Is All You Need”", url: "https://arxiv.org/abs/1706.03762" },
     summary: "The RNN turned out to be scaffolding, not structure. Keep only attention — every word matching its Query against every Key and blending the Values, in parallel — and you get the Transformer: context at any distance, one hop, at GPU speed. Every modern model, BERT to Claude, runs on this.",
@@ -181,7 +181,7 @@ const LESSONS = [
 
   {
     year: "2018",
-    title: "BERT: context, finally",
+    title: "How do you train context in?",
     people: "A Google team — BERT",
     source: { label: "Devlin et al. 2018 · “BERT”", url: "https://arxiv.org/abs/1810.04805" },
     summary: "Fill-in-the-blank training forced each word's vector to absorb its whole sentence, both directions at once. Out the other side came contextual embeddings — 'river bank' and 'cash bank' finally distinct — and the lookup table became a function.",
@@ -201,7 +201,7 @@ const LESSONS = [
 
   {
     year: "2019 → today",
-    title: "Sentence vectors — and your search bar",
+    title: "Search needs one vector per chunk",
     people: "Sentence-BERT · then the embedding-model era",
     source: { label: "Reimers & Gurevych 2019 · “Sentence-BERT”", url: "https://arxiv.org/abs/1908.10084" },
     summary: "Contrastive training plus mean pooling collapsed a whole sentence into a single comparable point — cheap enough to index millions of chunks and rank them by cosine. Semantic search as you use it today is this chapter's output, running the entire history underneath.",
@@ -224,7 +224,7 @@ const LESSONS = [
 
   {
     year: "2017, the other door",
-    title: "The Transformer's two twins",
+    title: "Understanding is only half — what writes?",
     people: "Encoder vs Decoder — one architecture, two jobs",
     source: { label: "Vaswani et al. 2017 · “Attention Is All You Need” (both halves)", url: "https://arxiv.org/abs/1706.03762" },
     summary: "The Transformer shipped with two halves, and the story so far cashed only one. Encoder: read everything at once, output understanding — BERT's half. Decoder: write new text left to right — GPT's half. Everything called an LLM is the second twin: the same attention machinery, aimed at generation.",
@@ -268,7 +268,7 @@ const LESSONS = [
 
   {
     year: "2018–20",
-    title: "Predict the next token. Forever.",
+    title: "Writing has no answer key",
     people: "GPT — the autoregressive idea",
     source: { label: "Radford et al. 2018 · “Improving Language Understanding by Generative Pre-Training” (GPT)", url: "https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf" },
     summary: "Writing reduced to a loop: predict the next token from everything so far, append it, feed it back, repeat — with causal attention keeping the model honest about a future it hasn't written yet. The internet became the answer key, and that loop is, mechanically, the entire engine of GPT and Claude.",
@@ -292,7 +292,7 @@ const LESSONS = [
 
   {
     year: "2020",
-    title: "Just make it bigger",
+    title: "Can autocomplete ever be smart?",
     people: "GPT-2 → GPT-3 — scaling laws & emergence",
     source: [
       { label: "Kaplan et al. 2020 · “Scaling Laws for Neural Language Models”", url: "https://arxiv.org/abs/2001.08361" },
@@ -328,7 +328,7 @@ const LESSONS = [
 
   {
     year: "2022 → now",
-    title: "From autocomplete to assistant",
+    title: "It continues text — it won't answer",
     people: "InstructGPT / RLHF → ChatGPT, Claude",
     source: { label: "Ouyang et al. 2022 · “Training language models to follow instructions with human feedback” (InstructGPT)", url: "https://arxiv.org/abs/2203.02155" },
     summary: "A raw predictor became an assistant through two steering steps: instruction tuning to teach the format of answering, then RLHF to tune outputs toward what humans actually prefer. ChatGPT and Claude are that recipe — the same next-token engine underneath, now aimed.",
@@ -353,7 +353,7 @@ const LESSONS = [
 
   {
     year: "2024 → now",
-    title: "Teaching it to think",
+    title: "It answers before it thinks",
     people: "o1 · DeepSeek-R1 — reasoning & RLVR",
     source: { label: "DeepSeek-AI 2025 · “DeepSeek-R1: Incentivizing Reasoning via RL”", url: "https://arxiv.org/abs/2501.12948" },
     summary: "Swap the human judge for a verifiable one — did the tests pass, does the math check — and give the model room to write out its working, and reasoning emerges on its own: scratch work, dead ends, backtracking and all. Seventy years of one idea, squeezed until it thinks.",
