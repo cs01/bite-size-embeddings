@@ -263,7 +263,7 @@ function selfAttnScene(k) {
       { cap: "<em>bank</em> fires its Query at every Key at once. The strongest match: <em>river</em>.", dur: 8 },
       { cap: "Each neighbour hands over its <span class=v>Value</span>, scaled by that weight. <em>river</em> gives the most, and <em>bank</em> now means the shore.", dur: 8.5 },
       { cap: "Every word does this at the same time. Any distance, one hop, perfectly parallel.", dur: 8 },
-      { kick: "The Transformer", cap: "Stack that layer dozens of times. This is the engine inside BERT, GPT and Claude.", dur: 9 },
+      { kick: "The Transformer", cap: "Each layer refines every word again, building on the layer below. GPT-3 stacks 96. This is the engine inside BERT, GPT and Claude.", dur: 9.5 },
     ],
     tick(ph, T) {
       const lift = ph(6, 0, 0.9);

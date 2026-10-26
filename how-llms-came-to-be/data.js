@@ -181,7 +181,8 @@ const LESSONS = [
       { p: "Each row is one word reading. Each cell is how much it attends to that column, and each row sums to 1. Hover a row: <code>bank</code> leans on <code>river</code>." },
       { widget: "attnmatrix" },
       { p: "Toggle the <strong>causal mask</strong>. Full: every word sees every word, as in BERT, which is built to understand. Causal: each word sees only earlier words, as in GPT, which is built to write and can't look at words it hasn't written yet. That triangle is the difference between an encoder and a generator." },
-      { legacy: "The Transformer: stacked layers of self-attention, fast enough to train on far more text than before. BERT, GPT and Claude are all built from it." },
+      { p: "One layer is one round of updating: attention moves information between words, then a small feed-forward network processes each word on its own. Layers are stacked, each reading the output of the one below. One round resolves <code>bank</code>; a later round can resolve <code>it</code> in <em>…because it was quiet</em>, which depends on <code>bank</code> already meaning the shore. The original Transformer stacked 6 layers; GPT-3 stacks 96." },
+      { legacy: "The Transformer: stacked layers of attention and feed-forward networks, fast enough to train on far more text than before. BERT, GPT and Claude are all built from it." },
     ],
     quiz: [
       { q: "What did \"Attention Is All You Need\" remove?", options: ["Attention", "The recurrent network (RNN), keeping only attention", "Embeddings", "Softmax"], answer: 1, explain: "Attention already existed (2014). The paper showed you could <b>delete the RNN</b> and keep only attention." },
