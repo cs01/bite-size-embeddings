@@ -256,7 +256,7 @@ function selfAttnScene(k) {
       { cap: "Slow, since nothing runs in parallel. And by the end of a long chain, the start has faded.", dur: 6 },
       { kick: "Vaswani et al., 2017", cap: "The bet: <em>delete the chain.</em> Give every word three new vectors: a <span class=q>Query</span>, a <span class=k>Key</span>, a <span class=v>Value</span>.", dur: 8 },
       { cap: "<em>bank</em> fires its Query at every Key at once. The strongest match: <em>river</em>.", dur: 8 },
-      { cap: "Those weights pull in Values. <em>bank</em> rewrites itself from its neighbours, and now it means the shore.", dur: 8.5 },
+      { cap: "Each neighbour hands over its <span class=v>Value</span>, scaled by that weight. <em>river</em> gives the most, and <em>bank</em> now means the shore.", dur: 8.5 },
       { cap: "Every word does this at the same time. Any distance, one hop, perfectly parallel.", dur: 8 },
       { kick: "The Transformer", cap: "Stack that layer dozens of times. This is the engine inside BERT, GPT and Claude.", dur: 9 },
     ],
@@ -420,9 +420,27 @@ function mount(host) {
   };
   playBtn.onclick = bigBtn.onclick = () => setPlaying(!playing);
   view.onclick = () => setPlaying(!playing);
-  host.querySelector(".sc-fs").onclick = () => {
-    if (document.fullscreenElement) document.exitFullscreen(); else host.requestFullscreen?.();
+  // iPhone Safari has no element fullscreen, and embedded/automated browsers can
+  // refuse it; both fall back to a fixed full-window overlay
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const isFull = () => fsEl() === host || host.classList.contains("pseudo-fs");
+  const setPseudo = (on) => {
+    host.classList.toggle("pseudo-fs", on);
+    document.documentElement.classList.toggle("sc-lock", on);
+    afterFs();
   };
+  host.querySelector(".sc-fs").onclick = async () => {
+    if (host.classList.contains("pseudo-fs")) return setPseudo(false);
+    if (fsEl()) return void (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    const req = host.requestFullscreen || host.webkitRequestFullscreen;
+    try { if (!req) throw new Error("unsupported"); await req.call(host); } catch { setPseudo(true); }
+  };
+  const onKey = (e) => { if (e.key === "Escape" && host.classList.contains("pseudo-fs")) setPseudo(false); };
+  // entering or leaving fullscreen must never leave the film paused-by-visibility or at the old size
+  function afterFs() { visible = isFull() || visible; resize(); last = performance.now(); }
+  document.addEventListener("fullscreenchange", afterFs);
+  document.addEventListener("webkitfullscreenchange", afterFs);
+  document.addEventListener("keydown", onKey);
 
   function caption(i) {
     if (i === beat) return;
@@ -448,7 +466,7 @@ function mount(host) {
 
   function frame(now) {
     raf = requestAnimationFrame(frame);
-    if (!visible && !document.fullscreenElement) return;
+    if (!visible && !isFull()) return;
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     if (playing) {
       T += dt;
@@ -460,6 +478,10 @@ function mount(host) {
   const resize = () => {
     const w = view.clientWidth, h = view.clientHeight;
     if (!w || !h) return;
+    // cap the drawing buffer near 3.5 MP: bloom runs on every pixel, and fullscreen at
+    // 2x density on a large display is enough to stall the GPU
+    const pr = Math.min(devicePixelRatio, 2, Math.sqrt(3.5e6 / (w * h)));
+    renderer.setPixelRatio(pr); composer.setPixelRatio(pr);
     renderer.setSize(w, h, false); composer.setSize(w, h); labels.setSize(w, h);
     bloom.resolution.set(w, h);
     camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -469,6 +491,7 @@ function mount(host) {
 
   // autoplay once the film is mostly on screen, like a muted documentary embed
   const io = new IntersectionObserver(([e]) => {
+    if (isFull()) return;
     visible = e.isIntersecting;
     if (visible && e.intersectionRatio > 0.6 && !started && !reduceMotion) setPlaying(true);
     if (!visible && playing) setPlaying(false);
@@ -482,6 +505,10 @@ function mount(host) {
     host,
     dispose() {
       cancelAnimationFrame(raf); ro.disconnect(); io.disconnect();
+      document.removeEventListener("fullscreenchange", afterFs);
+      document.removeEventListener("webkitfullscreenchange", afterFs);
+      document.removeEventListener("keydown", onKey);
+      document.documentElement.classList.remove("sc-lock");
       scene.traverse((o) => { o.geometry?.dispose(); o.material?.dispose?.(); });
       composer.dispose?.(); renderer.dispose(); renderer.forceContextLoss();
     },
