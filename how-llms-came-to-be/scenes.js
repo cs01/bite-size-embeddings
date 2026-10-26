@@ -103,7 +103,12 @@ function makeKit(scene) {
     // big screen-space title card (quotes, years) rendered in DOM over the canvas
     card: null,
     camera: null,
-    look(pos, target) { kit.camera.position.copy(pos); kit.camera.lookAt(target); },
+    // narrower-than-16:9 frames (square video, portrait phones) dolly back so the shot still fits
+    look(pos, target) {
+      const f = Math.pow(Math.max(1, (16 / 9) / kit.camera.aspect), 0.85);
+      kit.camera.position.copy(target).addScaledVector(pos.clone().sub(target), f);
+      kit.camera.lookAt(target);
+    },
   };
   return kit;
 }
@@ -340,11 +345,17 @@ function mount(host) {
   const build = SCENES[host.dataset.scene];
   if (!build) return;
   host.dataset.mounted = "1";
+  // render mode (render.html + tools/render-films.mjs): no player loop or controls;
+  // the caller steps time with __film.renderAt(t) and screenshots each frame
+  const render = !!host.dataset.render;
+  if (render) host.classList.add("render");
   host.innerHTML = `
     <div class="sc-view"></div>
     <div class="sc-grain"></div>
     <div class="sc-cap"><div class="sc-kick"></div><div class="sc-text"></div></div>
     <button class="sc-big" aria-label="play">▶</button>
+    <div class="sc-fade"></div>
+    <div class="sc-end"><div class="sc-end-t"></div><div class="sc-end-u">chadsmith.dev/how-llms-came-to-be</div></div>
     <div class="sc-ctl">
       <button class="sc-play" aria-label="play/pause">▶</button>
       <div class="sc-track"></div>
@@ -456,12 +467,28 @@ function mount(host) {
   function draw(force) {
     let i = 0; while (i < starts.length - 1 && T >= starts[i + 1]) i++;
     caption(i);
+    if (render) renderOverlays(i);
     sc.tick(ph, T);
     segs.forEach((s, j) => { s.firstChild.style.width = (clamp01((T - starts[j]) / sc.beats[j].dur) * 100) + "%"; });
     const sec = (x) => `${(x / 60) | 0}:${String(Math.floor(x % 60)).padStart(2, "0")}`;
     timeEl.textContent = `${sec(T)} / ${sec(total)}`;
     composer.render();
     labels.render(scene, camera);
+  }
+
+  // CSS transitions run on wall-clock time, which means nothing when frames are
+  // stepped; in render mode every fade is a function of T instead
+  const fadeEl = host.querySelector(".sc-fade"), endEl = host.querySelector(".sc-end");
+  endEl.querySelector(".sc-end-t").textContent = host.dataset.title || "";
+  const TAIL = 3.5;
+  function renderOverlays(i) {
+    const s0 = starts[i], e0 = s0 + sc.beats[i].dur, lastBeat = i === starts.length - 1;
+    const out = clamp01((T - total) / 0.5);
+    const a = clamp01((T - s0) / 0.6) * (lastBeat ? 1 : clamp01((e0 - T) / 0.35)) * (1 - out);
+    capEl.style.opacity = a;
+    capEl.style.transform = `translateY(${(1 - a) * 8}px)`;
+    fadeEl.style.opacity = Math.max(1 - clamp01(T / 0.8), 0.82 * clamp01((T - total) / 0.8));
+    endEl.style.opacity = clamp01((T - total - 0.4) / 0.8);
   }
 
   function frame(now) {
@@ -485,7 +512,8 @@ function mount(host) {
     renderer.setSize(w, h, false); composer.setSize(w, h); labels.setSize(w, h);
     bloom.resolution.set(w, h);
     camera.aspect = w / h; camera.updateProjectionMatrix();
-    host.style.setProperty("--sc-scale", Math.min(1.25, Math.max(0.62, w / 900)));
+    // video text must survive a phone-sized X feed, so render mode scales by height and goes bigger
+    host.style.setProperty("--sc-scale", render ? h / 540 : Math.min(1.25, Math.max(0.62, w / 900)));
   };
   const ro = new ResizeObserver(resize); ro.observe(view); resize();
 
@@ -499,7 +527,10 @@ function mount(host) {
   io.observe(host);
 
   setPlaying(false); draw(true);
-  raf = requestAnimationFrame(frame);
+  if (render) {
+    io.disconnect();
+    window.__film = { duration: total + TAIL, renderAt(t) { T = t; draw(true); } };
+  } else raf = requestAnimationFrame(frame);
 
   live.add({
     host,

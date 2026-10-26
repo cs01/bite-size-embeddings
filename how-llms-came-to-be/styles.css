@@ -261,3 +261,12 @@ html.sc-lock, html.sc-lock body { overflow: hidden; }
   .sc-text { font-size: 15px; } .sc-cap.quote .sc-text { font-size: 22px; }
   .sc-time { display: none; }
 }
+
+/* render mode (video export): no UI chrome, fades driven from the timeline */
+.sc-fade, .sc-end { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.sc-fade { background: #000; }
+.sc-end { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(14px * var(--sc-scale)); text-align: center; }
+.sc-end-t { font: italic 400 calc(30px * var(--sc-scale)) / 1.2 Georgia, serif; color: #fff; padding: 0 6%; }
+.sc-end-u { font: 600 calc(12px * var(--sc-scale)) / 1 var(--mono); letter-spacing: 2px; color: #ffc861; }
+.scene.render .sc-ctl, .scene.render .sc-big { display: none; }
+.scene.render .sc-cap { transition: none; }

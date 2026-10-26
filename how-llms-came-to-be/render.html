@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- Bare film page for video export: tools/render-films.mjs opens
+     render.html?scene=<name>&title=<end card text> and steps window.__film. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="styles.css">
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  .scene { position: fixed !important; inset: 0; margin: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+    width: 100vw; height: 100vh; aspect-ratio: auto !important; max-width: none !important; }
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div class="scene" data-render="1"></div>
+<script type="module">
+  const q = new URLSearchParams(location.search), el = document.querySelector(".scene");
+  el.dataset.scene = q.get("scene");
+  el.dataset.title = q.get("title") || "";
+  await document.fonts.ready;
+  await import("./scenes.js");
+</script>
+</body>
+</html>
