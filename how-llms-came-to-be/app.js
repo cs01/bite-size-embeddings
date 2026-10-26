@@ -1,9 +1,13 @@
 // App logic: render the journey, drive navigation, score quizzes, persist
 // progress in localStorage, and power the two interactive widgets.
 
-const KEY = "how-llms-came-to-be.progress.v1";
-// pre-rename visitors have progress under the old key; fall back once, save() rewrites under KEY
-const LEGACY_KEY = "footsteps.progress.v1";
+const KEY = "how-llms-came-to-be.progress.v2";
+// v1 (and the older footsteps key) stored progress by chapter index; chapters
+// have since been reordered, so v1 indices are mapped through the old order
+// to stable ids once, and save() rewrites under KEY
+const V1_KEYS = ["how-llms-came-to-be.progress.v1", "footsteps.progress.v1"];
+const V1_ORDER = ["meaning", "lsa", "bengio", "word2vec", "polysemy", "bahdanau", "transformer",
+  "bert", "sbert", "decoder", "bpe", "gpt", "scaling", "rlhf", "reasoning"];
 let state = load();
 // A `#<n>` hash (1-based lesson number) deep-links a specific chapter and wins
 // over saved progress, so shared / cross-site links (e.g. from svd-explorer)
@@ -18,13 +22,24 @@ let current = (() => {
 })();
 
 function load() {
-  try { return JSON.parse(localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY)) || { done: {}, last: 0 }; }
-  catch { return { done: {}, last: 0 }; }
+  try {
+    const cur = JSON.parse(localStorage.getItem(KEY));
+    if (cur) return cur;
+    for (const k of V1_KEYS) {
+      const old = JSON.parse(localStorage.getItem(k));
+      if (!old) continue;
+      const done = {};
+      for (const [i, v] of Object.entries(old.done || {})) if (V1_ORDER[i]) done[V1_ORDER[i]] = v;
+      const lastId = V1_ORDER[old.last || 0];
+      return { done, last: Math.max(0, LESSONS.findIndex((l) => l.id === lastId)) };
+    }
+  } catch {}
+  return { done: {}, last: 0 };
 }
 function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
 
 // ---- section renderers ----
-const CALLOUT_LABEL = { desk: "The problem on their desk", leap: "The leap", aside: "Notice", legacy: "What it left us" };
+const CALLOUT_LABEL = { desk: "The problem", leap: "The idea", aside: "Notice", legacy: "Carried forward" };
 
 // The resolution, told after the story — what the world came out the other
 // side with. Sits at the bottom so the problem, not the answer, opens each
@@ -126,8 +141,9 @@ function onAnswer(e) {
   ex.classList.add("show");
 
   // Lesson counts as done once every question has been attempted.
-  state.done[li] = state.done[li] || {};
-  state.done[li][qi] = right;
+  const id = LESSONS[li].id;
+  state.done[id] = state.done[id] || {};
+  state.done[id][qi] = right;
   save();
   renderRail();
 }
@@ -135,7 +151,7 @@ function onAnswer(e) {
 function lessonComplete(li) {
   const total = LESSONS[li].quiz ? LESSONS[li].quiz.length : 0;
   if (!total) return false;
-  const d = state.done[li] || {};
+  const d = state.done[LESSONS[li].id] || {};
   return Object.keys(d).length >= total;
 }
 

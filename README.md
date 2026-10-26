@@ -8,7 +8,7 @@ A documentary in chapters: each one opens on the problem the world was stuck on,
 
 | repo path | live URL (chadsmith.dev) | what it is |
 |------|--------|-----------|
-| `/how-llms-came-to-be/` | `/how-llms-came-to-be/` | the main story — Firth → embeddings → self-attention → RLHF. 13 chapters, live widgets, quizzes, summary + further reading at the end of each. Saves progress in `localStorage`. Deep-link a chapter with `#<n>`. |
+| `/how-llms-came-to-be/` | `/how-llms-came-to-be/` | the main story — Firth → embeddings → self-attention → RLHF. 15 chapters, each: problem, idea, what was carried forward; live widgets, quizzes, further reading. Saves progress in `localStorage`. Deep-link a chapter with `#<n>`. |
 | `/svd/` | `/svd/` | **SVD Explorer** — singular value decomposition built bottom-up: vectors → eigenvectors → geometry → image compression. The math behind the LSA chapter. |
 | `/lecture-atlas/` | `/lecture-atlas/` | **Lecture Atlas** — Stanford CS336 (18 lectures) distilled into searchable cards, each linked to the YouTube lecture. Built from `/transcripts/`. |
 | `/` | — | landing page for the GitHub Pages mirror only |

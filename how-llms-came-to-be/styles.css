@@ -110,10 +110,11 @@ h2.lt { font-size: 32px; margin: 8px 0 5px; line-height: 1.14; letter-spacing: -
   /* long unbroken tokens (urls, code) must wrap, not push the box past 720px */
   overflow-wrap: break-word;
 }
+/* label sits on its own line so every chapter reads problem / idea / carried forward at a glance */
 .callout .tag {
-  font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .2px;
+  display: block; margin-bottom: 2px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
 }
-.callout .tag::after { content: " — "; color: var(--muted); font-weight: 400; }
 .callout.desk { border-color: var(--gold); } .callout.desk .tag { color: var(--gold); }
 .callout.leap { border-color: var(--accent-2); } .callout.leap .tag { color: var(--accent-2); }
 .callout.aside { border-color: var(--muted); } .callout.aside .tag { color: var(--muted); }
