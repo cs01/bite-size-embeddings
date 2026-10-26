@@ -241,15 +241,16 @@ html.sc-lock, html.sc-lock body { overflow: hidden; }
 .sc-text .q { color: #ff6b6b; } .sc-text .k { color: #4dd4ac; } .sc-text .v { color: #6ea8ff; }
 .sc-cap.quote { bottom: 38%; text-align: center; }
 .sc-cap.quote .sc-text { margin: 0 auto; font: italic 400 calc(34px * var(--sc-scale)) / 1.25 Georgia, "Times New Roman", serif; }
-.sc-big { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); width: 74px; height: 74px; border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.35); background: rgba(10,14,26,.55); color: #fff; font-size: 26px; cursor: pointer;
+.sc-big { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); width: clamp(72px, 13%, 124px); aspect-ratio: 1; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.55); background: rgba(10,14,26,.6); color: #fff; font-size: clamp(28px, 4.6vw, 46px); cursor: pointer;
+  padding-left: .12em;
   backdrop-filter: blur(4px); transition: opacity .3s; }
 /* big button only before first play and at the end (replay); mid-film pauses keep the frame clear */
 .scene:not(.fresh):not(.ended) .sc-big, .scene.playing .sc-big { opacity: 0; pointer-events: none; }
 .sc-ctl { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 10px 14px;
   background: linear-gradient(transparent, rgba(0,0,0,.65)); opacity: .55; transition: opacity .3s; }
 .scene:hover .sc-ctl, .scene:not(.playing) .sc-ctl { opacity: 1; }
-.sc-ctl button { background: none; border: 0; color: #e8ecf6; font-size: 15px; cursor: pointer; padding: 4px 6px; }
+.sc-ctl button { background: none; border: 0; color: #e8ecf6; font-size: 20px; cursor: pointer; padding: 6px 10px; min-width: 44px; min-height: 40px; }
 /* the visible bar is 3px but the hit area spans the full control row, so taps just above or below still seek */
 .sc-track { flex: 1; display: flex; gap: 3px; align-self: stretch; margin: -10px 0; padding: 10px 0; align-items: center; cursor: pointer; touch-action: none; }
 .sc-seg { height: 3px; background: rgba(255,255,255,.22); border-radius: 2px; overflow: hidden; transition: height .15s; }
