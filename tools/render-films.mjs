@@ -63,6 +63,9 @@ for (const f of films) {
     ff.stdin.end();
     await done;
     await page.close();
+    // the film opens on black, so the <video> poster is a frame from mid-film instead
+    await new Promise((r) => spawn("ffmpeg", ["-y", "-loglevel", "error", "-ss", String(duration * 0.55), "-i", out,
+      "-frames:v", "1", "-q:v", "3", out.replace(/\.mp4$/, ".jpg")], { stdio: "inherit" }).on("close", r));
     console.log(`\r  ${out.replace(ROOT + "/", "")}  ${frames} frames in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
   }
 }

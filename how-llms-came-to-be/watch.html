@@ -34,7 +34,7 @@
   document.getElementById("films").innerHTML = list.map(({ l, n, scene }) => {
     const f = (sz) => `films/${String(n).padStart(2, "0")}-${scene}-${sz}.mp4`;
     return `<section class="film"><h2><small>Chapter ${n} · ${l.year}</small>${l.title}</h2>
-      <video controls playsinline preload="metadata" src="${f("1920x1080")}"></video>
+      <video controls playsinline preload="metadata" poster="${f("1920x1080").replace(".mp4", ".jpg")}" src="${f("1920x1080")}"></video>
       <div class="dl">Download: <a href="${f("1920x1080")}" download>16:9</a><a href="${f("1080x1080")}" download>square</a><a href="./#${n}">read the chapter</a></div></section>`;
   }).join("");
 </script>
