@@ -1,7 +1,7 @@
 // The journey: each chapter reconstructs a real discovery — the problem on the
 // desk, the prevailing (painful) approach, and the leap. Read it as a story you
 // could have lived. Content is historically faithful; equations are simplified
-// to the load-bearing idea, not the full paper.
+// to the core idea, not the full paper.
 
 const LESSONS = [
   {
@@ -30,27 +30,21 @@ const LESSONS = [
   {
     year: "1990",
     title: "Search can't see synonyms",
-    people: "A search-engine team — Latent Semantic Analysis (LSA)",
+    people: "A search-engine team, Latent Semantic Analysis (LSA)",
     source: { label: "Deerwester et al. 1990 · “Indexing by LSA”", url: "https://doi.org/10.1002/(SICI)1097-4571(199009)41:6%3C391::AID-ASI1%3E3.0.CO;2-9" },
-    summary: "The synonymy problem fell to counting plus linear algebra: turn every word into a list of numbers, compress the table with SVD, and 'similar meaning' becomes 'small angle between points in space.' The embedding — and cosine similarity as its ruler — left this chapter finished, decades before GPT.",
+    summary: "Counting plus SVD turned each word into a point in space, and 'similar meaning' into 'small angle.' The embedding and its ruler, cosine similarity, were in place by 1990.",
     body: [
-      { p: "Fast-forward to information retrieval. You're building search. A user types <code>car</code>; a perfect document says <code>automobile</code> and never once says <code>car</code>. Keyword matching returns nothing. This is the <strong>synonymy problem</strong>, and it's killing recall.", lead: true },
-      { desk: "Keyword search is literal. <code>car</code> ≠ <code>automobile</code> to a string matcher, even though they mean the same thing. How do you match on <em>meaning</em>?" },
-      { p: "The 1990 answer was <strong>Latent Semantic Analysis (LSA)</strong> — 'latent' because it digs out hidden meaning the literal words don't show. It takes Firth literally and builds the <strong>term–document matrix</strong>: rows = words, columns = documents, each cell = does this word appear here (real systems weight these counts, but the idea is the same). Now every word is a row vector of which documents it lives in — its 'company,' as numbers." },
-      { p: "But the matrix is huge and noisy. The trick: <strong>SVD</strong> (singular value decomposition) compresses it to a few hundred latent dimensions. Words that co-occur with similar documents collapse toward the <em>same direction</em> in this smaller space. <code>car</code> and <code>automobile</code>, never seen together, end up neighbors because they keep the same company." },
-
-      { h: "SVD, the intuitive version: friend-of-a-friend" },
-      { p: "A word is just <strong>one row of the table</strong> — the list of documents it shows up in. Tiny example:" },
+      { p: "The problem moves to search. A user types <code>car</code>. The best document says <code>automobile</code> and never says <code>car</code>. Keyword matching returns nothing.", lead: true },
+      { desk: "How do you match on <em>meaning</em> when the words themselves don't match?" },
+      { p: "<strong>Latent Semantic Analysis</strong> takes Firth literally. Build a table: one row per word, one column per document, a 1 where the word appears. Each word becomes a row of numbers, a record of the company it keeps." },
       { eq: "            doc1  doc2  doc3  doc4\ncar           1     1     0     0\nautomobile    0     0     1     1\nwheel         1     1     1     1" },
-      { p: "<code>car</code> = <code>[1,1,0,0]</code> and <code>automobile</code> = <code>[0,0,1,1]</code> <strong>never share a single document</strong>. Raw overlap is zero — keyword search thinks they're unrelated. But look: <em>both sit next to</em> <code>wheel</code> (and would sit next to <code>engine</code>, <code>road</code>…)." },
-      { leap: "SVD does <strong>friend-of-a-friend</strong>: <em>you're similar to those who share your friends — even if you two have never met.</em> <code>car</code> and <code>automobile</code> never meet, but they keep all the same company (<code>wheel</code>, <code>engine</code>, <code>road</code>). SVD spots the shared friends and links them." },
-      { p: "Concretely: SVD invents a few hidden <strong>themes</strong> (a 'vehicle' theme, a 'finance' theme…) and re-describes every word by <em>how much of each theme it has</em>, instead of <em>which raw documents</em>. Now <code>car</code> and <code>automobile</code> both score high on the vehicle theme → their vectors point the same way → cosine ≈ 1. <strong>Synonyms discovered, with zero direct overlap.</strong>" },
-      { p: '<a class="deepdive" href="../svd/#idea">Optional side-track → <b>SVD Explorer</b>: the linear-algebra machinery (rotate·stretch·rotate, Eckart–Young) behind this compression, for the curious. Not needed for the rest of the journey.</a>' },
-
-      { leap: "A word is now a <strong>point in space</strong>. Similar meaning ⇒ nearby points. 'Nearby' becomes math: the <em>angle</em> between two vectors. This is the birth of the embedding. <strong>Cosine similarity</strong> — a metric LSA inherited from 1960s vector-space retrieval — is still exactly what your code-search tool uses today." },
+      { p: "<code>car</code> and <code>automobile</code> share no documents, so their rows don't overlap at all. But both share documents with <code>wheel</code>, <code>engine</code>, <code>road</code>." },
+      { leap: "<strong>SVD</strong> compresses the table into a few hundred hidden themes (vehicles, finance, …) and describes each word by how much of each theme it carries. <code>car</code> and <code>automobile</code> score the same on the vehicle theme, so their vectors point the same way. Friends of friends: similar because they share company, though they never meet." },
+      { p: '<a class="deepdive" href="../svd/#idea">Optional side-track → <b>SVD Explorer</b>: the linear algebra behind the compression. Not needed for the rest of the story.</a>' },
+      { p: "A word is now a point in space, and similar meaning is a small angle between points. The cosine of that angle, borrowed from 1960s retrieval research, is still how semantic search ranks results." },
       { widget: "cosine" },
-      { p: "Move the vectors above. Small angle ⇒ cosine near 1 ⇒ 'same meaning.' Ninety degrees ⇒ cosine 0 ⇒ unrelated. Every semantic search is this, in 384 dimensions instead of 2." },
-      { legacy: "Vector embeddings are now ~35 years old. LSA had no neural net, no attention, no GPU — just counting and linear algebra. The <em>idea</em> of meaning-as-geometry was already complete in 1990." },
+      { p: "Drag the vectors. Small angle: cosine near 1, same meaning. Right angle: cosine 0, unrelated. Real systems do this in hundreds of dimensions." },
+      { legacy: "No neural network, no GPU, just counting and linear algebra. Meaning-as-geometry was complete in 1990. What was missing was a better way to make the vectors." },
     ],
     quiz: [
       { q: "What problem did LSA primarily solve for search?", options: ["Spelling mistakes", "Synonymy — matching car↔automobile by meaning", "Slow disk reads", "Grammar checking"], answer: 1, explain: "SVD pulls synonyms into the same latent direction even when they never co-occur. <b>Meaning-as-geometry.</b>" },
@@ -157,21 +151,20 @@ const LESSONS = [
     title: "What if the RNN is the problem?",
     people: "A Google team — the Transformer",
     source: { label: "Vaswani et al. 2017 · “Attention Is All You Need”", url: "https://arxiv.org/abs/1706.03762" },
-    summary: "The RNN turned out to be scaffolding, not structure. Keep only attention — every word matching its Query against every Key and blending the Values, in parallel — and you get the Transformer: context at any distance, one hop, at GPU speed. Every modern model, BERT to Claude, runs on this.",
+    summary: "Keep attention, delete the RNN: every word scores its Query against every Key and blends the Values, all in parallel. That is the Transformer, and every modern model runs on it.",
     body: [
       { scene: "selfattn" },
-      { p: "RNNs had a second, deeper problem: they're <strong>sequential</strong>. Word 50 can't be processed until words 1–49 are done. On modern GPUs — which crave parallelism — that's torture. And long-range dependencies still decayed through the chain.", lead: true },
-      { desk: "RNN + attention worked, but the RNN forced sequential computation (slow, unparallelizable) and still struggled to connect distant words. What if the RNN was the <em>problem</em>, not the scaffold?" },
-      { p: "The audacious bet, right there in the title: <strong>throw the RNN away entirely.</strong> Keep only attention. Let every word attend to <em>every other word directly</em>, in parallel, in one step. They called it <strong>self-attention</strong>." },
-      { p: "The machinery is three projections of each word — <strong>Query, Key, Value</strong>: the word asks a question (Query), advertises what it offers (Key), and carries content (Value). A word's Query is matched against every word's Key to get attention weights; those weights pull a blend of Values:" },
+      { p: "Attention fixed the bottleneck, but the RNN underneath still read one word at a time. Word 50 waits for words 1 through 49, which wastes GPUs built for parallel work, and distant words still fade along the chain.", lead: true },
+      { desk: "What if the RNN is the problem, and attention alone is enough?" },
+      { p: "That is the bet in the paper's title: delete the RNN. Let every word attend to every other word directly, all at once. This is <strong>self-attention</strong>." },
+      { p: "Each word produces three vectors. A <strong>Query</strong>: what am I looking for? A <strong>Key</strong>: what do I offer? A <strong>Value</strong>: what I pass along if chosen. Each Query is scored against every Key, the scores become weights, and the weights blend the Values:" },
       { eq: "Attention(Q,K,V) = softmax( Q·Kᵀ / √d ) · V" },
-      { leap: "Now <code>bank</code> emits a Query like 'what disambiguates me?', matches strongly on the Keys of <code>river</code> or <code>cash</code>, and pulls their Values into its own representation. <strong>The word literally rewrites itself from its neighbors</strong> — fully parallel, any distance, one hop. This is the contextual embedding the 2014 chapter demanded, finally built clean." },
-      { h: "See it: every word reading every word" },
-      { p: "Each <em>row</em> is one word doing the reading; each <em>cell</em> is how much it attends to the word in that column (one softmax per row, so each row sums to 1). Hover a row to read it. Notice <code>bank</code> leaning hard on <code>river</code> — that's disambiguation happening as numbers." },
+      { leap: "<code>bank</code>'s Query matches <code>river</code>'s Key, so <code>bank</code> pulls in <code>river</code>'s Value and its vector shifts toward 'shore.' Every word rewrites itself from its neighbours, in parallel, at any distance. This is the contextual embedding the polysemy chapter asked for." },
+      { h: "Every word reading every word" },
+      { p: "Each row is one word reading; each cell is how much it attends to that column. Rows sum to 1. Hover a row: <code>bank</code> leans on <code>river</code>." },
       { widget: "attnmatrix" },
-      { p: "Flip the <strong>causal mask</strong>. <em>Full</em> (BERT-style) lets every word see every other — great for <em>understanding</em>. <em>Causal</em> (GPT-style) blacks out the future (upper triangle): a word may only read what came <em>before</em> it, because at generation time the future doesn't exist yet. Same machinery, one triangle of difference — that's the whole split between an encoder and a generator." },
-      { aside: "Same operation, both problems solved at once: translation's bottleneck <em>and</em> the static-embedding curse. 'Read your neighbors and update' became the whole architecture." },
-      { legacy: "The Transformer is the substrate of <strong>all</strong> of it now — BERT, GPT, Claude, and the small embedding models a code-search tool loads to embed text. Every modern embedding is a pooled stack of self-attention." },
+      { p: "Toggle the <strong>causal mask</strong>. Full: every word sees every word, as in BERT, built to understand. Causal: each word sees only earlier words, as in GPT, built to write, because the future hasn't been written yet. That one triangle is the difference between an encoder and a generator." },
+      { legacy: "One operation solved both open problems: translation's bottleneck and the one-vector-per-word curse. Every model since, from BERT to Claude, is a stack of this layer." },
     ],
     quiz: [
       { q: "What did 'Attention Is All You Need' remove?", options: ["Attention", "The recurrent network (RNN) — keeping only attention", "Embeddings", "Softmax"], answer: 1, explain: "The flex of the title: attention already existed (2014); they proved you could <b>delete the RNN</b> and keep only attention." },
@@ -192,7 +185,7 @@ const LESSONS = [
       { leap: "To fill in a blank, a word's representation must absorb its <strong>entire bidirectional context</strong>. After training, <code>bank</code> in 'river bank' and <code>bank</code> in 'cash bank' come out as <strong>different vectors</strong> — the polysemy curse from the 2013 chapter is finally broken. Embeddings are contextual." },
       { widget: "maskfill" },
       { aside: "word2vec: one vector per word. BERT: one vector per word <em>per sentence</em>. The lookup table became a function." },
-      { legacy: "BERT crushed benchmarks and made contextual embeddings the default. But there was a catch for <em>similarity</em> tasks specifically — and fixing it is what makes your code search possible." },
+      { legacy: "BERT crushed benchmarks and made contextual embeddings the default. But it had a catch for <em>similarity</em> search, and fixing it is what makes semantic search practical." },
     ],
     quiz: [
       { q: "BERT's training trick (masked language modeling) forces each word to…", options: ["Memorize the dictionary", "Absorb its full left+right context to predict masked words", "Ignore context", "Translate to French"], answer: 1, explain: "Predicting a blank from both sides ⇒ representations must encode bidirectional context ⇒ <b>contextual embeddings</b>." },
@@ -207,7 +200,7 @@ const LESSONS = [
     source: { label: "Reimers & Gurevych 2019 · “Sentence-BERT”", url: "https://arxiv.org/abs/1908.10084" },
     summary: "Contrastive training plus mean pooling collapsed a whole sentence into a single comparable point — cheap enough to index millions of chunks and rank them by cosine. Semantic search as you use it today is this chapter's output, running the entire history underneath.",
     body: [
-      { p: "BERT embeds <em>words in context</em>, but search needs a single vector for a whole <strong>sentence or document</strong> — and BERT was painfully slow at comparing pairs (you'd have to re-run it on every pair). Useless at the scale of a codebase.", lead: true },
+      { p: "BERT embeds <em>words in context</em>, but search needs a single vector for a whole <strong>sentence or document</strong> — and BERT was painfully slow at comparing pairs (you'd have to re-run it on every pair). Useless at the scale of a search index.", lead: true },
       { desk: "How do you get <em>one</em> good vector per sentence/chunk, fast enough to index millions and compare by cosine?" },
       { leap: "Sentence-BERT trains BERT with a <strong>siamese / contrastive</strong> objective: push similar texts' vectors together, dissimilar ones apart, then <strong>mean-pool</strong> — average all the word vectors into one that stands for the whole sentence. Now a sentence is <em>one</em> point in space — and similarity is back to a plain cosine, like LSA in 1990, but vastly smarter." },
       { widget: "pool" },
@@ -218,8 +211,8 @@ const LESSONS = [
     ],
     quiz: [
       { q: "Why couldn't plain BERT be used directly for large-scale similarity search?", options: ["It had no attention", "Comparing pairs was far too slow and it gave no single sentence vector", "It only knew French", "It used word2vec"], answer: 1, explain: "BERT scores pairs (rerun per pair) and has no native sentence vector. Sentence-BERT fixes both with contrastive training + pooling." },
-      { q: "<code>all-MiniLM-L6-v2</code> (a common code-search embedding model) is fundamentally…", options: ["A keyword matcher", "A small distilled Sentence-BERT: stacked self-attention, mean-pooled to one vector", "A word2vec lookup", "An n-gram counter"], answer: 1, explain: "Transformer encoder (6 layers) + mean-pool + contrastive training → 384-d sentence embedding. The whole history, in one download." },
-      { q: "Which metric ties 1990 LSA to 2024 code search?", options: ["Edit distance", "Cosine similarity between vectors", "BLEU score", "Word count"], answer: 1, explain: "Cosine. Meaning-as-geometry never left — the vectors just got dramatically better." },
+      { q: "<code>all-MiniLM-L6-v2</code> (a common small embedding model) is fundamentally…", options: ["A keyword matcher", "A small distilled Sentence-BERT: stacked self-attention, mean-pooled to one vector", "A word2vec lookup", "An n-gram counter"], answer: 1, explain: "Transformer encoder (6 layers) + mean-pool + contrastive training → 384-d sentence embedding. The whole history, in one download." },
+      { q: "Which metric ties 1990 LSA to today's semantic search?", options: ["Edit distance", "Cosine similarity between vectors", "BLEU score", "Word count"], answer: 1, explain: "Cosine. Meaning-as-geometry never left — the vectors just got dramatically better." },
     ],
   },
 
@@ -339,11 +332,11 @@ const LESSONS = [
       { p: "<strong>Step 1 — Instruction tuning.</strong> Fine-tune on many <code>(instruction → good answer)</code> examples. This teaches the <em>format</em> of being helpful: when you see a question, answer it." },
       { p: "<strong>Step 2 — RLHF</strong> (reinforcement learning from human feedback). Show humans several model answers; they rank them best→worst. Train a <em>reward model</em> to predict those rankings, then optimize the LLM to score high. Now it's tuned toward what people actually <em>want</em> — helpful, honest, harmless." },
       { widget: "rlhf" },
-      { leap: "<strong>ChatGPT (Nov 2022) = a big next-token model + instruction tuning + RLHF.</strong> The engine didn't get smarter — it got <em>steered</em>. Same autocomplete underneath, now aimed at being a good assistant. Claude (what you're talking to) is this exact lineage, with heavy emphasis on the honest/harmless part." },
+      { leap: "<strong>ChatGPT (Nov 2022) = a big next-token model + instruction tuning + RLHF.</strong> The engine didn't get smarter — it got <em>steered</em>. Same autocomplete underneath, now aimed at being a good assistant. Claude comes from the same lineage, with AI feedback against a written constitution added to the human feedback." },
       { h: "You already know what's inside it" },
       { p: "Open up the LLM answering you right now and every part is a chapter you just walked:" },
-      { eq: "first layer        →  a token EMBEDDING table      (Bengio '03, word2vec '13)\ncore operation     →  SELF-ATTENTION               (Bahdanau '14, Transformer '17)\ncontext handling   →  words rewrite from neighbors  (the 'bank' problem, BERT '18)\nhow it writes      →  next-token autoregression     (GPT)\nhow it's helpful   →  instruction tuning + RLHF      (ChatGPT '22)" },
-      { legacy: "From Firth's 1957 sentence to the assistant in your browser, it's <strong>one</strong> idea, refined for decades: meaning lives in context, and if you build a machine to exploit that hard enough, understanding emerges. But the story didn't stop at ChatGPT — the next leap was teaching the model to <em>think</em>. One more chapter." },
+      { eq: "first layer        →  a token EMBEDDING table      (Bengio '03, word2vec '13)\ncore operation     →  SELF-ATTENTION               (Bahdanau '14, Transformer '17)\ncontext handling   →  words rewrite from neighbors (the 'bank' problem, BERT '18)\nhow it writes      →  next-token autoregression    (GPT)\nhow it's helpful   →  instruction tuning + RLHF    (ChatGPT '22)" },
+      { legacy: "An assistant still answers instantly, whatever the question. The next leap was giving it room to <em>think</em>." },
     ],
     quiz: [
       { q: "Why isn't a raw pretrained LLM (like GPT-3) already a helpful assistant?", options: ["It's too small", "It only continues text patterns — it doesn't follow instructions or align to what users want", "It can't read", "It uses SVD"], answer: 1, explain: "Pretraining = next-token prediction. Following instructions & being helpful is added afterward." },
@@ -361,15 +354,15 @@ const LESSONS = [
     body: [
       { p: "RLHF made models <em>helpful</em>, but hand one a hard math or coding problem and even ChatGPT would blurt out an answer — often wrong. It had no room to <em>work</em>. The next leap: let the model think before it speaks.", lead: true },
       { desk: "Human feedback teaches style and preference. But for math or code, 'which answer do you <em>like</em> better?' is the wrong question — there's a <strong>right answer</strong>. How do you train on that?" },
-      { p: "<strong>RLVR — reinforcement learning from <em>verifiable</em> rewards.</strong> Drop the human rater. Instead ask: did the math answer match? Did the code pass its tests? That's an objective, un-gameable signal. Let the model generate long attempts, keep the ones that verify, reinforce them." },
+      { p: "<strong>RLVR — reinforcement learning from <em>verifiable</em> rewards.</strong> Drop the human rater. Instead ask: did the math answer match? Did the code pass its tests? That signal is objective and much harder to game than a human's taste. Let the model generate long attempts, keep the ones that verify, reinforce them." },
       { p: "Trained this way, models learn to emit a long <strong>chain of thought</strong> — scratch work, dead ends, backtracking — before the final answer. And the more tokens they're given to 'think,' the better they score. A new knob appeared: <strong>test-time compute</strong>, separate from training compute." },
       { widget: "think" },
       { leap: "DeepSeek's <strong>R1-Zero</strong> drove it home: from a base model with <em>no</em> worked examples, pure verifiable-reward RL, it taught <em>itself</em> to reason — rediscovering 'wait, let me check my work' from scratch. Reasoning wasn't programmed in; it emerged because it's the cheapest way to get the answer right." },
       { aside: "Same tune as the whole course: don't engineer the skill — set up an objective that <strong>forces</strong> it. SVD was forced to find topics; GPT was forced to model the world; RLVR forces the model to reason. Pressure, not instruction." },
-      { legacy: "From Firth's 1957 sentence — <em>'know a word by the company it keeps'</em> — to a machine that teaches itself to reason, it's <strong>one</strong> idea, refined for ~70 years: meaning lives in context, and if you build a machine to exploit that hard enough — then squeeze it with the right pressure — understanding, and now reasoning, emerge. You've walked the entire road. 🎉" },
+      { legacy: "From Firth's 1957 sentence — <em>'know a word by the company it keeps'</em> — to a machine that teaches itself to reason, it's <strong>one</strong> idea, refined for ~70 years: meaning lives in context, and if you build a machine to exploit that hard enough — then squeeze it with the right pressure — understanding, and now reasoning, emerge. You've walked the entire road." },
     ],
     quiz: [
-      { q: "How does RLVR differ from RLHF?", options: ["It's just bigger", "The reward is an objective, checkable signal (tests pass, answer matches) instead of human preference", "It uses no compute", "It removes attention"], answer: 1, explain: "Verifiable rewards can't be gamed the way a learned preference model can — ideal for math and code." },
+      { q: "How does RLVR differ from RLHF?", options: ["It's just bigger", "The reward is an objective, checkable signal (tests pass, answer matches) instead of human preference", "It uses no compute", "It removes attention"], answer: 1, explain: "A checkable reward is far harder to game than a learned preference model, which makes it ideal for math and code." },
       { q: "'Test-time compute' means…", options: ["Training for longer", "Letting the model spend more tokens thinking at answer-time improves results", "A faster GPU", "Shrinking the model"], answer: 1, explain: "A new scaling axis: longer chains of thought at inference, separate from how long you trained." },
       { q: "Why is R1-Zero teaching itself to reason the same theme as the rest of the course?", options: ["It isn't related", "An objective that forces the skill (verifiable reward) makes reasoning emerge — like compression forced understanding", "It memorized the answers", "It uses keyword search"], answer: 1, explain: "Pressure, not instruction. The recurring idea: set up the right objective and the capability falls out." },
     ],
