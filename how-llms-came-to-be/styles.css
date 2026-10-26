@@ -244,8 +244,10 @@ strong { color: var(--ink); font-weight: 600; }
   background: linear-gradient(transparent, rgba(0,0,0,.65)); opacity: .55; transition: opacity .3s; }
 .scene:hover .sc-ctl, .scene:not(.playing) .sc-ctl { opacity: 1; }
 .sc-ctl button { background: none; border: 0; color: #e8ecf6; font-size: 15px; cursor: pointer; padding: 4px 6px; }
-.sc-track { flex: 1; display: flex; gap: 3px; height: 14px; align-items: center; cursor: pointer; }
-.sc-seg { height: 3px; background: rgba(255,255,255,.22); border-radius: 2px; overflow: hidden; }
+/* the visible bar is 3px but the hit area spans the full control row, so taps just above or below still seek */
+.sc-track { flex: 1; display: flex; gap: 3px; align-self: stretch; margin: -10px 0; padding: 10px 0; align-items: center; cursor: pointer; touch-action: none; }
+.sc-seg { height: 3px; background: rgba(255,255,255,.22); border-radius: 2px; overflow: hidden; transition: height .15s; }
+.sc-track:hover .sc-seg { height: 6px; }
 .sc-seg i { display: block; height: 100%; width: 0; background: #ffc861; }
 .sc-time { font: 11px var(--mono); color: #a9b3cc; min-width: 76px; text-align: right; }
 @media (max-width: 640px) {

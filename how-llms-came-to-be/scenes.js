@@ -392,9 +392,15 @@ function mount(host) {
 
   track.innerHTML = sc.beats.map((b) => `<div class="sc-seg" style="flex:${b.dur}"><i></i></div>`).join("");
   const segs = [...track.children];
-  const seekTo = (t) => { T = Math.max(0, Math.min(total, t)); draw(true); };
+  // seeking after the end resumes playback; otherwise the ↺ overlay stays up and it looks like nothing happened
+  const seekTo = (t) => {
+    const wasEnded = !playing && T >= total - 0.01;
+    T = Math.max(0, Math.min(total, t));
+    if (wasEnded && T < total - 0.01) setPlaying(true); else setPlaying(playing);
+    draw(true);
+  };
   // handy for poking at a single shot from devtools: $(".scene").seek(12)
-  host.seek = (t) => { setPlaying(false); seekTo(t); };
+  host.seek = (t) => { setPlaying(false); T = Math.max(0, Math.min(total, t)); setPlaying(false); draw(true); };
   track.addEventListener("pointerdown", (e) => {
     const move = (ev) => { const r = track.getBoundingClientRect(); seekTo(clamp01((ev.clientX - r.left) / r.width) * total); };
     move(e); track.setPointerCapture(e.pointerId);
