@@ -11,6 +11,7 @@ const LESSONS = [
     source: { label: "Harris 1954 · “Distributional Structure”", url: "https://www.tandfonline.com/doi/pdf/10.1080/00437956.1954.11659520" },
     summary: "What came out the other side: meaning, redefined as something a machine can count. A word is characterized by the contexts it appears in — no dictionary, no human judge, only patterns in text. The bet was placed decades before any computer could act on it.",
     body: [
+      { scene: "distrib" },
       { p: "You want a machine to understand language. First question, and it's a wall: <em>what is the meaning of a word, in a form a machine could hold?</em> A dictionary defines words with more words — circular. Meaning seems to live in human heads, not on paper.", lead: true },
       { desk: "How do you represent <em>meaning</em> as something mechanical — countable, comparable — without a human in the loop?" },
       { p: "The linguists' escape was to stop asking what a word <em>means</em> and ask where it <em>appears</em>. Harris's <strong>distributional hypothesis</strong>: words used in the same contexts tend to have similar meanings. Firth's slogan made it famous:" },
@@ -158,6 +159,7 @@ const LESSONS = [
     source: { label: "Vaswani et al. 2017 · “Attention Is All You Need”", url: "https://arxiv.org/abs/1706.03762" },
     summary: "The RNN turned out to be scaffolding, not structure. Keep only attention — every word matching its Query against every Key and blending the Values, in parallel — and you get the Transformer: context at any distance, one hop, at GPU speed. Every modern model, BERT to Claude, runs on this.",
     body: [
+      { scene: "selfattn" },
       { p: "RNNs had a second, deeper problem: they're <strong>sequential</strong>. Word 50 can't be processed until words 1–49 are done. On modern GPUs — which crave parallelism — that's torture. And long-range dependencies still decayed through the chain.", lead: true },
       { desk: "RNN + attention worked, but the RNN forced sequential computation (slow, unparallelizable) and still struggled to connect distant words. What if the RNN was the <em>problem</em>, not the scaffold?" },
       { p: "The audacious bet, right there in the title: <strong>throw the RNN away entirely.</strong> Keep only attention. Let every word attend to <em>every other word directly</em>, in parallel, in one step. They called it <strong>self-attention</strong>." },

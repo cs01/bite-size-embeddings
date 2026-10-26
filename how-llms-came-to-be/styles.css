@@ -202,3 +202,53 @@ strong { color: var(--ink); font-weight: 600; }
   .widget label { width: auto; display: block; margin-bottom: 2px; }
   .widget svg { max-width: 100%; height: auto; }
 }
+
+/* ---- documentary scenes (scenes.js): dark film frame in a light page ---- */
+.scene {
+  --sc-scale: 1;
+  position: relative; aspect-ratio: 16 / 9; margin: 22px 0 34px; border-radius: 10px; overflow: hidden;
+  background: #070a12; color: #e8ecf6; box-shadow: 0 18px 50px -18px rgba(10, 15, 35, .55);
+  user-select: none;
+}
+#lesson > .scene { max-width: 960px; }
+.scene:fullscreen { border-radius: 0; aspect-ratio: auto; width: 100vw; height: 100vh; max-width: none; }
+.sc-view, .sc-view canvas, .sc-labels { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-view { cursor: pointer; }
+.sc-labels { pointer-events: none; }
+/* vignette + very faint scanline grain: reads as film, not as a UI */
+.sc-grain { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%),
+              repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px); }
+.sc-word { font: 600 calc(15px * var(--sc-scale)) / 1 -apple-system, "SF Pro Text", system-ui, sans-serif;
+  letter-spacing: .3px; text-shadow: 0 0 10px currentColor, 0 1px 2px #000; white-space: nowrap; transform: translateY(-6px); }
+.sc-word.big { font-size: calc(22px * var(--sc-scale)); color: #fff !important; }
+.sc-word.pct { font: 600 calc(13px * var(--sc-scale)) / 1 var(--mono); text-shadow: 0 1px 2px #000; }
+.sc-word.gloss { font: italic 500 calc(15px * var(--sc-scale)) / 1 Georgia, serif; }
+.sc-cap { position: absolute; left: 5%; right: 5%; bottom: calc(46px * var(--sc-scale) + 12px); pointer-events: none;
+  opacity: 0; transform: translateY(8px); transition: opacity .7s ease, transform .7s ease; }
+.sc-cap.in { opacity: 1; transform: none; }
+.sc-kick { font: 600 calc(11px * var(--sc-scale)) / 1 var(--mono); letter-spacing: 3px; text-transform: uppercase; color: #ffc861; margin-bottom: 8px; min-height: 1px; }
+.sc-text { font: 500 calc(20px * var(--sc-scale)) / 1.4 -apple-system, system-ui, sans-serif; max-width: 34em;
+  text-shadow: 0 2px 12px #000, 0 0 2px #000; }
+.sc-text em { font-style: normal; color: #ffc861; }
+.sc-text .q { color: #ff6b6b; } .sc-text .k { color: #4dd4ac; } .sc-text .v { color: #6ea8ff; }
+.sc-cap.quote { bottom: 38%; text-align: center; }
+.sc-cap.quote .sc-text { margin: 0 auto; font: italic 400 calc(34px * var(--sc-scale)) / 1.25 Georgia, "Times New Roman", serif; }
+.sc-big { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); width: 74px; height: 74px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.35); background: rgba(10,14,26,.55); color: #fff; font-size: 26px; cursor: pointer;
+  backdrop-filter: blur(4px); transition: opacity .3s; }
+/* big button only before first play and at the end (replay); mid-film pauses keep the frame clear */
+.scene:not(.fresh):not(.ended) .sc-big, .scene.playing .sc-big { opacity: 0; pointer-events: none; }
+.sc-ctl { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: linear-gradient(transparent, rgba(0,0,0,.65)); opacity: .55; transition: opacity .3s; }
+.scene:hover .sc-ctl, .scene:not(.playing) .sc-ctl { opacity: 1; }
+.sc-ctl button { background: none; border: 0; color: #e8ecf6; font-size: 15px; cursor: pointer; padding: 4px 6px; }
+.sc-track { flex: 1; display: flex; gap: 3px; height: 14px; align-items: center; cursor: pointer; }
+.sc-seg { height: 3px; background: rgba(255,255,255,.22); border-radius: 2px; overflow: hidden; }
+.sc-seg i { display: block; height: 100%; width: 0; background: #ffc861; }
+.sc-time { font: 11px var(--mono); color: #a9b3cc; min-width: 76px; text-align: right; }
+@media (max-width: 640px) {
+  .scene { border-radius: 0; margin-left: -6vw; margin-right: -6vw; }
+  .sc-text { font-size: 15px; } .sc-cap.quote .sc-text { font-size: 22px; }
+  .sc-time { display: none; }
+}

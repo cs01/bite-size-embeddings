@@ -52,6 +52,7 @@ function renderBody(body) {
       if (s[k]) return `<div class="callout ${k}"><span class="tag">${CALLOUT_LABEL[k]}</span>${s[k]}</div>`;
     }
     if (s.widget) return `<div class="widget" data-widget="${s.widget}"></div>`;
+    if (s.scene) return `<div class="scene fresh" data-scene="${s.scene}"></div>`;
     return "";
   }).join("");
 }
@@ -82,6 +83,9 @@ function render() {
   if (history.replaceState) history.replaceState(null, "", `#${current + 1}`);
   const l = LESSONS[current];
   const el = document.getElementById("lesson");
+  // scenes.js is a module and may load after the first render; it mounts any
+  // .scene already in the DOM itself
+  window.disposeScenes?.();
   el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade");
   el.innerHTML =
     `<div class="era">${l.year}</div>` +
@@ -95,6 +99,7 @@ function render() {
   el.scrollTop = 0;
   el.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", onAnswer));
   el.querySelectorAll(".widget").forEach(mountWidget);
+  window.mountScenes?.(el);
 
   document.getElementById("prev").disabled = current === 0;
   document.getElementById("next").disabled = current === LESSONS.length - 1;
